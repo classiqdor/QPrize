@@ -24,16 +24,18 @@ Once activated, use plain `python`, `pip`, `jupyter`.
 
 ## Repository Structure
 
-- **`classiq-library/`** — Open-source quantum algorithm library (100+ algorithms as Jupyter notebooks)
-- **`qday-prize/`** — Competition submission: Shor's algorithm for elliptic curve discrete logarithm (ECDLP)
+- **`repos/classiq-library/`** — Open-source quantum algorithm library (gitignored)
+- **`repos/qday-prize/`** — Original competition submission (gitignored)
+- **`repos/Cadmium/`** — Classiq backend source (read-only reference, gitignored)
 
 ---
 
-## classiq-library
+## classiq-library (repos/classiq-library)
 
 ### Install
 
 ```fish
+cd repos/classiq-library
 pip install -r requirements.txt -r requirements_tests.txt
 pre-commit install
 ```
@@ -45,12 +47,6 @@ pre-commit install
 ```
 
 Test config variants: `tests/config_quick_tests.ini` (fast), `tests/config_weekly.ini` (extended). Per-notebook timeout limits: `tests/resources/timeouts.yaml`.
-
-### Linting
-
-```fish
-pre-commit run --all-files
-```
 
 ### Running Notebooks
 
@@ -68,18 +64,25 @@ set -x OPENVSCODE some-dummy-value
 ### Reference Notebooks
 
 Code is based primarily on:
-- `algorithms/number_theory_and_cryptography/elliptic_curves/elliptic_curve_discrete_log.ipynb`
-- `algorithms/number_theory_and_cryptography/discrete_log/discrete_log.ipynb`
+- `repos/classiq-library/algorithms/number_theory_and_cryptography/elliptic_curves/elliptic_curve_discrete_log.ipynb`
+- `repos/classiq-library/algorithms/number_theory_and_cryptography/discrete_log/discrete_log.ipynb`
 
 ---
 
-## qday-prize
+## QPrize — Project Files
 
-Shor's algorithm for ECDLP using **group-index encoding**: EC points as integers mod group order `n`, eliminating quantum modular inversion and reducing qubit count from O(log p) to O(log n).
+Key files in the root:
+- `consts.py` — all competition curve parameters (bits 4–21), with field docs
+- `utils.py` — `timed()` context manager, `play_ending_sound()`
+- `ec.py` — classical EC point arithmetic (`point_add`)
+- `attempts/` — quantum circuit attempts; `attempt_000` is a classical curve explorer
+- `tests/` — pytest test suite (`pytest` from root runs all tests)
+- `worklog/` — per-session activity logs
+
+Shor's algorithm for ECDLP. See `PLAN.md` for current status and optimization roadmap.
 
 | Variant | Bits | Qubits | CX gates | Status |
 |---|---|---|---|---|
-| Ripple-carry | 4 | 11 | 716 | Proven on hardware (Rigetti, IonQ, IBM) |
-| QFT-space adder | 6 | 16 | 1,252 | Simulator only; hardware fidelity ~0.15% |
-
-Key files: `solution/shor_ecdlp_classiq.py`, `solution/ecc_classical.py`, `process/log.md`.
+| Scalar oracle (002B–004) | 4 | 11 | 716 | ✅ Hardware-verified |
+| Scalar oracle (002B–004) | 6 | 16 | 1,252 | Simulator only (~0.15% fidelity) |
+| EC arithmetic oracle (004-1507) | 4 | TBD | TBD | Unverified |

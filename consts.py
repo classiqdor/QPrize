@@ -12,6 +12,21 @@ class EllipticCurve:
 
 @dataclass
 class Parameters:
+    """
+    Parameters for a competition ECC instance (curve y² = x³ + ax + b mod p).
+
+    bits     — key size (the competition asks to break a `bits`-bit key)
+    p        — prime field modulus; coordinates are integers mod p
+    order_E  — total number of points on E(F_p), including point at infinity
+    n        — order of the generator G; the discrete log d lives in Z_n
+               (equals order_E when h=1, i.e. all competition curves are prime-order)
+    h        — cofactor: h = order_E / n  (always 1 for these curves)
+    G        — generator point as (x, y); public, defines the group
+    d        — private key: the integer we want to find (Q = d·G)
+    Q        — public key point: Q = d·G; given, do not use d to derive it
+    a        — curve parameter a in y² = x³ + ax + b  (= 0 for all competition curves)
+    b        — curve parameter b  (= 7 for all competition curves, same as secp256k1)
+    """
     bits: int
     p: int
     order_E: int

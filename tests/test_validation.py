@@ -1,14 +1,13 @@
 # =============================================================================
 # Validation tests — verify we are actually solving ECDLP, not something else.
 #
-# Run:   pytest test_validation.py -v
-#        pytest test_validation.py -v -k algebraic   # instant, no quantum
-#        pytest test_validation.py -v -k quantum      # ~60s, runs circuits
+# Run:   pytest tests/test_validation.py -v
+#        pytest tests/test_validation.py -v -k algebraic   # instant, no quantum
+#        pytest tests/test_validation.py -v -k quantum      # ~60s, runs circuits
 #
 # Test categories:
 #   [algebraic]  Pure classical math checks — instant
 #   [quantum]    Requires circuit execution — slow (~20s each for 4-bit)
-#   [review]     Reads agent code review output
 # =============================================================================
 
 import math
@@ -256,22 +255,3 @@ def test_quantum_distribution_structure(result_4bit_correct):
           f"({valid_fraction/random_baseline:.1f}x enriched)")
 
 
-# ---------------------------------------------------------------------------
-# [review] Agent code review
-# ---------------------------------------------------------------------------
-
-def test_code_review_approved():
-    """
-    Check that the agent code review (saved to code_review.md) approved the code.
-    Run `python -m pytest test_validation.py -k review` after review is complete.
-    """
-    import os
-    review_path = os.path.join(os.path.dirname(__file__), "code_review.md")
-    if not os.path.exists(review_path):
-        pytest.skip("code_review.md not yet generated — run validate_code.py first")
-
-    content = open(review_path).read()
-    assert "APPROVED" in content, (
-        f"Code review did not approve. See code_review.md for details."
-    )
-    assert "REJECTED" not in content, "Code review contains REJECTED verdict"

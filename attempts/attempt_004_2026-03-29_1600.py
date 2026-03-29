@@ -42,7 +42,7 @@ import numpy as np
 from classiq import *
 
 from consts import PARAMS
-from ecc import point_add
+from ec import point_add
 from utils import timed, play_ending_sound
 
 SUPPORTED_BITS = set(PARAMS.keys())  # all sizes: 4-21
