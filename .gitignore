@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.bak
+temp.txt
+Cadmium/
+classiq-library/
+qday-prize/
+*.ipynb
