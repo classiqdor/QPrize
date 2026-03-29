@@ -3,3 +3,4 @@
 # Append only — never edit past entries.
 
 [2026-03-29] [orsa] Created log.txt. Repo cloned, push access confirmed. Current best: 4-bit working on hardware (716 CX), 6-bit simulator only (1252 CX). Goal: get 6-bit on hardware by cutting to ~500 CX.
+[2026-03-26] [dor] Added test_validation.py (algebraic + quantum + code-review tests), code_review.md (APPROVED), PLAN.md (roadmap), cross-platform play_ending_sound() in utils.py

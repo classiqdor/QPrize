@@ -1,3 +1,4 @@
+import platform
 import subprocess
 import threading
 import time
@@ -34,4 +35,7 @@ class timed:
 
 
 def play_ending_sound():
-    subprocess.Popen(["paplay", "/usr/share/sounds/freedesktop/stereo/complete.oga"])
+    if platform.system() == "Linux":
+        subprocess.Popen(["paplay", "/usr/share/sounds/freedesktop/stereo/complete.oga"])
+    elif platform.system() == "Darwin":
+        subprocess.Popen(["afplay", "/System/Library/Sounds/Glass.aiff"])
