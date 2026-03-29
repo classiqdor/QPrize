@@ -6,9 +6,11 @@ LATEST = {
     4: [
         {"attempt": "attempt_002B_2026-03-29_1235", "expected_seconds": 15},
         {"attempt": "attempt_003_2026-03-29_1420", "expected_seconds": 60},
+        {"attempt": "attempt_004_2026-03-29_1600", "expected_seconds": 60},
     ],
     6: [
         {"attempt": "attempt_002B_2026-03-29_1235", "expected_seconds": 60},
         {"attempt": "attempt_003_2026-03-29_1420", "expected_seconds": 120},
+        {"attempt": "attempt_004_2026-03-29_1600", "expected_seconds": 120},
     ],
 }
