@@ -4,15 +4,18 @@
 
 ---
 
-## Current Status (2026-03-26)
+## Current Status (2026-03-29)
 
 | Bits | Attempts | Best CX | Fidelity | Status |
 |------|----------|---------|----------|--------|
-| 4    | 002B, 003 | 716 CX  | ~2.8%    | ✅ Working (simulator + hardware) |
-| 6    | 002B, 003 | 1,252 CX | ~0.15%  | ✅ Simulator only — too noisy for hardware |
+| 4    | 002B, 003, 004 | 716 CX | ~2.8% | ✅ Working (simulator + hardware) |
+| 6    | 002B, 003, 004 | 1,252 CX | ~0.15% | ✅ Simulator only — too noisy for hardware |
 | 7+   | —        | —       | —        | ❌ Not attempted |
 
 **Target:** Break the largest ECC key possible. Need ≤ ~500 CX for 6-bit hardware viability.
+
+### ⚠️ Critical fix in attempt_004: attempts 002–003 were using d directly in the oracle
+Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before solving. See below for two different fix approaches.
 
 ---
 
@@ -97,7 +100,25 @@
 | 002 | 2026-03-29 12:30 | Group-index encoding, standalone | 716 | 1,252 | Baseline |
 | 002B | 2026-03-29 12:35 | Refactored to export solve() | 716 | 1,252 | ✅ Working |
 | 003 | 2026-03-29 14:20 | optimization_level=1 | 716 | 1,252 | No improvement |
-| 004 | — | Semiclassical QFT | — | — | Planned |
+| 004 (1507) | 2026-03-29 15:07 | **Quantum EC arithmetic** — EllipticCurvePoint (x,y) QStruct, quantum ec_point_add | TBD | TBD | Unverified — correct but expensive |
+| 004 (1600) | 2026-03-29 16:00 | **Classical enumeration** — derive negq_steps from Q via EC point lookup table, same scalar oracle | TBD | TBD | Registered, unverified |
+| 005 | — | Semiclassical QFT | — | — | Planned |
+
+### Two approaches to fixing the oracle (both correct, different cost):
+
+**004-1507 (quantum EC arithmetic):**
+- Oracle register holds (x, y) coordinates mod p
+- `ec_scalar_mult_add` does controlled quantum EC point addition
+- Uses lookup-table modular inverse (feasible for small p)
+- More expensive but scales to sizes where group enumeration is infeasible
+- Does not assume knowledge of d at any point
+
+**004-1600 (classical enumeration + scalar oracle):**
+- Classically enumerates all n EC group elements to build point→index table
+- Uses this to find index of 2^i*Q without knowing d
+- Same cheap scalar oracle (modular additions mod n) as 002B/003
+- Feasible for competition sizes (n ≤ ~50000), infeasible for cryptographic sizes
+- Does not assume knowledge of d; uses only public G, Q, p, n
 
 ---
 
