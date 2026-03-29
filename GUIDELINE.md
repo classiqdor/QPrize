@@ -117,6 +117,47 @@ if __name__ == "__main__":
 - `allocate(size, signed, fraction_digits, reg)` — use `fraction_digits=size` for fractional QNum (values in [0,1)), use `fraction_digits=0` for integer QNum
 - `free(reg)` is required for any register allocated inside a `@qperm` but not returned
 
+### ⚡ Strong suggestion: split `main` into three named sub-functions
+
+The core bottleneck is the group addition oracle, not the Hadamard or QFT layers. To keep
+focus there and avoid conflating unrelated parts of the circuit, split `main` into three
+clearly named helpers and have `main` call them in order:
+
+```python
+@qfunc
+def prepare_superposition(x1: Output[QArray[QBit]], x2: Output[QArray[QBit]]) -> None:
+    """Allocate and Hadamard the two QPE registers."""
+    allocate(var_len, x1)
+    allocate(var_len, x2)
+    hadamard_transform(x1)
+    hadamard_transform(x2)
+
+@qfunc   # (or @qperm if reversible)
+def group_add_oracle(
+    x1: QArray[QBit],
+    x2: QArray[QBit],
+    ecp: Output[...],
+) -> None:
+    """The group addition oracle — ecp = P0 + x1*G - x2*Q. This is the hard part."""
+    ...
+
+@qfunc
+def extract_phase(x1: QArray[QBit], x2: QArray[QBit]) -> None:
+    """Inverse QFT to extract the period."""
+    invert(lambda: qft(x1))
+    invert(lambda: qft(x2))
+
+@qfunc
+def main(x1: Output[QArray[QBit]], x2: Output[QArray[QBit]], ecp: Output[...]) -> None:
+    prepare_superposition(x1, x2)
+    group_add_oracle(x1, x2, ecp)
+    extract_phase(x1, x2)
+```
+
+**Why:** Every attempt optimizes `group_add_oracle`. Keeping it isolated makes it easy to
+swap implementations, compare CX counts, and avoids accidentally touching the Hadamard or
+QFT layers when experimenting with the oracle.
+
 ### Post-processing convention
 The oracle is: `ecp = P0 + x1*G - x2*Q`
 
@@ -143,10 +184,47 @@ d = (-x2_r * pow(x1_r, -1, n)) % n
 
 ---
 
+## Genuine ECDLP vs. the Scalar-Encoding Flaw
+
+### The flaw (attempts 002B, 003, 004-1600, 005)
+
+These attempts use **scalar-index encoding**: EC group elements are stored as integers
+in Z_n (the scalar index k, where the element equals k·G). The oracle then computes:
+
+    negq_steps[i] = (n − scalar_index(2^i · Q)) % n
+
+But `scalar_index(Q) = d` — the secret itself. Even deriving it "indirectly" via a
+brute-force point_to_index enumeration still means d is solved classically before the
+quantum circuit runs. The quantum step is then redundant.
+
+The quantum circuit computes `x1 − x2·d  (mod n)` — arithmetic in Z_n, not EC arithmetic.
+
+### The genuine approach (attempt 004-1507, 006+)
+
+The oracle register must hold **EC coordinates** `(x, y) ∈ F_p × F_p`. Precomputed
+classical constants must be EC points derivable from G and Q *without knowing d*:
+
+    g_powers[i]      = 2^i · G     (doublings of G — uses only G)
+    neg_q_powers[i]  = −(2^i · Q)  (doublings of Q, negate y — uses only Q as a point)
+
+The quantum circuit applies controlled **EC point additions** (slope formula mod p).
+`d` is never used anywhere in circuit construction.
+
+### Rule
+
+**The oracle must never use `params.d`.** Allowed inputs: `params.G`, `params.Q`,
+`params.p`, `params.n`, `params.a`, `params.b`.
+
+If you find yourself computing `(n − d) % n`, looking up d in a lookup table, or using
+`point_to_index` to convert Q to a scalar, the attempt is NOT genuine ECDLP.
+
+---
+
 ## What NOT to do
 
 - Do not hardcode `d` into circuit constants (circular — defeats the purpose of ECDLP)
-- Do not use `p.d` in the oracle; only use `p.G`, `p.Q`, `p.n`, `p.p`, `p.a`, `p.b`
+- Do not use `params.d` in the oracle; only use `params.G`, `params.Q`, `params.n`, `params.p`, `params.a`, `params.b`
+- Do not use scalar-index encoding for the oracle register (see "Genuine ECDLP" section above)
 - Do not run `git push` without pulling first
 - Do not edit past entries in `registry.py` or `log.txt`
 - Do not add `Co-Authored-By` to commit messages

@@ -56,31 +56,34 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 
 **Goal:** Get 6-bit to ≤ 500 CX (from 1,252). Stretch: reach 7-bit.
 
-### 🥇 Priority 1: Semiclassical QFT
-- **Idea:** Measure each qubit of x1/x2 one at a time, classically compute feed-forward phase corrections. Eliminates all entangling gates in the QFT phase.
-- **Impact:** Could eliminate 200-400 CX gates from the QFT portion.
-- **Status:** No built-in in Classiq SDK (confirmed by searching Cadmium source). Must implement manually using `measure()` + classical feed-forward.
-- **Hardware requirement:** Needs mid-circuit measurement + feed-forward. Supported on IonQ Forte-1, IBM (dynamic circuits).
-- **Next step:** Prototype in attempt_004.
+### ~~Priority 1: Semiclassical QFT~~ ❌ Not Worth It (4% savings)
+- **Result:** H + inv_QFT(x1, x2) = only **52 CX** out of 1,252 total (4%). Bottleneck is controlled modular additions (~120 CX each × 10 = ~1,200 CX).
+- **Lesson:** Semiclassical QFT only helps when QFT dominates. In our circuit, it doesn't.
 
-### 🥈 Priority 2: Approximate QFT
-- **Idea:** Drop QFT rotation gates smaller than hardware noise floor (< π/2^k for hardware-appropriate k). Meaningless rotations get dropped for free.
-- **Impact:** Reduces CX count in QFT with controllable accuracy loss. Potentially 30-50 CX saved.
-- **Status:** No `approximation_degree` parameter in Classiq QFT (confirmed). Must manually reconstruct QFT with dropped rotations using `@qfunc` + `phase` gates.
-- **Next step:** Implement after semiclassical QFT attempt.
+### ~~Priority 1: Exploit Power-of-2 G_STEPS Constants~~ ❌ Already Exploited
+- **Result:** Classiq synthesizer already exploits trailing zeros: CX = 122 - 6×(trailing_zeros(k)) for mod-31 QFT-space add. Savings are modest (≤24 CX per addition).
+- **Also measured:** mod 32 vs mod 31: only **8 CX less per addition**. Mersenne trick saves little.
+- **Root cause:** Per-addition cost scales as ~4n² CX (Beauregard-style QFT comparison oracle is O(n²)). Constant structure cannot overcome this.
 
-### 🥉 Priority 3: Exploit Power-of-2 Constants
-- **Idea:** For 6-bit (n=31), `G_STEPS = [1, 2, 4, 8, 16]` — all powers of 2. A controlled add of 2^k = bit shift, which may have much lower gate cost than general modular adder.
-- **Relevant:** Gidney blog shows specific constants can have zero gate cost when circuit is designed around them.
-- **Status:** Classiq SDK uses generic `modular_add_constant_inplace`. May need custom `@qfunc` decomposition.
-- **Next step:** Check if Classiq has constant-specific adder synthesis, or implement bit-shift-based mod adder.
+### 🥇 Priority 1: Quantinuum H-Series Hardware for 7-bit
+- **Idea:** Quantinuum H2 has ~99.9% 2Q fidelity. For 7-bit (3212 CX): 0.999^3212 ≈ 4.1% fidelity. Much better than IBM (0.15% for 6-bit). Could get correct answers.
+- **Impact:** Demonstrate 7-bit ECDLP (d=56) on hardware — likely the competition goal.
+- **Status:** Need to check Classiq backend list and obtain Quantinuum access.
+- **Next step:** Check available backends via Classiq SDK, request access.
 
-### Priority 4: Truncate VAR_LEN
-- **Idea:** Use fewer QPE register bits (e.g. 4 instead of 5 for n=31). Each dropped bit saves 2 controlled additions. Accept lower success probability, compensate with more shots.
-- **Impact:** Could halve CX count at cost of 2× more shots.
-- **Risk:** Post-processing rounding gets less accurate with fewer bits.
-- **Reference:** "Truncated modular exponentiation" paper — >50% levels can be dropped.
-- **Status:** Easy to implement, try in attempt_005.
+### 🥈 Priority 2: Alternative Algorithm with Fewer Oracle Calls
+- **Idea:** Windowed exponentiation or Regev-style multi-dimensional period finding to reduce number of controlled additions (currently 2×var_len = 10).
+- **Status:** Needs research. Windowed approach: group var_len bits into windows of w, reduces additions from 2n to 2n/w at cost of 2^w different lookup values per window.
+- **Next step:** Research Regev (2023) and windowed approach applicability to ECDLP.
+
+### ~~Priority 2: Approximate QFT~~ Low Priority
+- **Impact:** QFT only contributes ~104 CX (8% of total). Not the bottleneck.
+
+### ~~Priority 4: Truncate VAR_LEN~~ ❌ Does Not Work
+- **Result:** var_len=4 → top candidate d=0 (❌); var_len=3 → top candidate d=30 (❌). Both fail.
+- **Why:** n=31 requires N=2^var_len ≥ n to resolve QFT peaks. With N=16 < 31, peaks from different m fold together — the signal is destroyed, not reduced.
+- **Lesson:** For Shor's period finding, you need N ≥ n. Full var_len is mandatory.
+- **Tested in:** attempt_005 (6-bit, n=31)
 
 ### Priority 5: Regev's Algorithm
 - **Idea:** Regev (2023) improved Shor's factoring algorithm; may generalize to ECDLP.
@@ -101,8 +104,20 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 | 002B | 2026-03-29 12:35 | Refactored to export solve() | 716 | 1,252 | ✅ Working |
 | 003 | 2026-03-29 14:20 | optimization_level=1 | 716 | 1,252 | No improvement |
 | 004 (1507) | 2026-03-29 15:07 | **Quantum EC arithmetic** — EllipticCurvePoint (x,y) QStruct, quantum ec_point_add | TBD | TBD | Unverified — correct but expensive |
-| 004 (1600) | 2026-03-29 16:00 | **Classical enumeration** — derive negq_steps from Q via EC point lookup table, same scalar oracle | TBD | TBD | Registered, unverified |
-| 005 | — | Semiclassical QFT | — | — | Planned |
+| 004 (1600) | 2026-03-29 16:00 | **Classical enumeration** — derive negq_steps from Q via EC point lookup table, same scalar oracle | 716 | 1,252 | ✅ Verified (d=6, d=18, d=56) |
+| 005 | 2026-03-29 | **Truncated var_len** — var_len=4 (1022 CX) and var_len=3 (778 CX) for 6-bit | — | 1022/778 | ❌ Fails — N must be ≥ n for QFT peaks to resolve |
+| 006 | 2026-03-29 | **Genuine ECDLP** — EC coordinate register (x,y)∈F_p, Roetteler 2017, d never used | ~130k CX | — | Synthesized (28q, 129938 CX), execution in progress |
+
+### ⚠️ Correctness: attempts 002B–005 are NOT genuine ECDLP
+
+Scalar-index encoding (002B, 003, 004-1600, 005) implicitly computes d before running
+the quantum circuit: `negq_steps[i] = (n − point_to_index[2^i·Q]) % n` looks up Q's
+scalar index via a brute-force enumeration of the EC group — that IS the discrete log.
+The quantum circuit then does integer arithmetic in Z_n (DLP in Z_n, trivially easy).
+
+The genuine ECDLP approach (004-1507, 006) uses EC coordinates (x,y) in F_p for the
+oracle register, and derives neg_q_powers by EC point doubling of Q without knowing d.
+See GUIDELINE.md "Genuine ECDLP vs. the Scalar-Encoding Flaw".
 
 ### Two approaches to fixing the oracle (both correct, different cost):
 
@@ -113,7 +128,7 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 - More expensive but scales to sizes where group enumeration is infeasible
 - Does not assume knowledge of d at any point
 
-**004-1600 (classical enumeration + scalar oracle):**
+**004-1600 (classical enumeration + scalar oracle) — NOT genuine ECDLP:**
 - Classically enumerates all n EC group elements to build point→index table
 - Uses this to find index of 2^i*Q without knowing d
 - Same cheap scalar oracle (modular additions mod n) as 002B/003
