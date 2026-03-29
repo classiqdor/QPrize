@@ -13,4 +13,7 @@ LATEST = {
         {"attempt": "attempt_003_2026-03-29_1420", "expected_seconds": 120},
         {"attempt": "attempt_004_2026-03-29_1600", "expected_seconds": 25},  # ✅ verified: d=18
     ],
+    7: [
+        {"attempt": "attempt_004_2026-03-29_1600", "expected_seconds": 50},  # ✅ verified: d=56 (3212 CX — simulator only)
+    ],
 }
