@@ -20,8 +20,8 @@ One row per synthesis run. Add a row each time you run `solve()` and record the 
 | attempt_004B_2026-03-29_1900 | 4 | 11 | 1050 | 716 | ✅ (d=6) | `group enum` |
 | attempt_004B_2026-03-29_1900 | 6 | 16 | 1271 | 1,252 | ✅ (d=18) | `group enum` |
 | attempt_006B_2026-03-29_1900 | 4 | — | — | — | not yet run | `lookup inverse` |
-| attempt_007_2026-03-29_1840 | 4 | — | — | — | pending | `lookup inverse` |
-| attempt_008_2026-03-29_1859 | 4 | — | — | — | pending | `lookup inverse` |
+| attempt_007_2026-03-29_1840 | 4 | — | — | — | pending | `none` |
+| attempt_008_2026-03-29_1859 | 4 | — | — | — | pending | `none` |
 | attempt_example_scalar | 4 | 11 | 1050 | 716 | ✅ (d=6) | `group enum` |
 | attempt_example_scalar | 6 | 17 | 3280 | 2,910 | ✅ (d=18) | `group enum` |
 
