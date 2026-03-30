@@ -1,5 +1,7 @@
 # QPrize — Shor's ECDLP on Quantum Hardware
 
+Authors: Amir Naveh, Or Samimi, Dor Harpaz, Ariel Smoler
+
 ## For Claude (start here)
 
 Run `/resync` at the start of every session, and periodically while working (every ~30 min) since multiple Claude instances and humans may be pushing in parallel.
