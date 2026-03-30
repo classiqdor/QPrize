@@ -1,12 +1,16 @@
 """
-test_ibm_hardware.py — Bell state test on IBM hardware via Classiq.
+test_ibm_hardware.py — Bell state test on real IBM quantum hardware via Classiq.
 
-Tries three backends in order:
-  1. Real IBM hardware (ibm_torino) via Classiq's credentials (run_via_classiq=True)
-  2. IBM noise model emulation (ibm_torino noise, Classiq AerSimulator)
-  3. Classiq simulator (baseline)
+Credentials are read from environment variables (set in .env, never committed):
+  IBM_TOKEN        — IBM Cloud API token
+  IBM_INSTANCE     — IBM Cloud instance CRN
+  IBM_CHANNEL      — channel, e.g. "ibm_cloud"  (default: ibm_cloud)
+  IBM_BACKEND      — backend name               (default: ibm_torino)
 
-Run with: python test_ibm_hardware.py [real|emulate|sim]
+Source .env before running:
+  set -a; source .env; set +a   # bash/zsh
+
+Run with: python test_ibm_hardware.py
 """
 
 import sys
@@ -61,26 +65,19 @@ def run_bell(backend_label: str, backend_prefs) -> None:
 
 
 if __name__ == "__main__":
-    mode = sys.argv[1] if len(sys.argv) > 1 else "real"
+    IBM_TOKEN    = os.environ.get("IBM_TOKEN")
+    IBM_INSTANCE = os.environ.get("IBM_INSTANCE")
+    IBM_CHANNEL  = os.environ.get("IBM_CHANNEL", "ibm_cloud")
+    IBM_BACKEND  = os.environ.get("IBM_BACKEND", "ibm_torino")
 
-    if mode == "real":
-        backend_prefs = IBMBackendPreferences(
-            backend_name="ibm_torino",
-            run_via_classiq=True,
-        )
-        run_bell("IBM ibm_torino (via Classiq credentials)", backend_prefs)
-
-    elif mode == "emulate":
-        backend_prefs = IBMBackendPreferences(
-            backend_name="ibm_torino",
-            emulate=True,
-        )
-        run_bell("IBM ibm_torino noise model (AerSimulator emulation)", backend_prefs)
-
-    elif mode == "sim":
-        backend_prefs = ClassiqBackendPreferences(backend_name="simulator")
-        run_bell("Classiq Simulator (no noise)", backend_prefs)
-
-    else:
-        print(f"Unknown mode: {mode!r}. Use: real | emulate | sim")
+    if not IBM_TOKEN or not IBM_INSTANCE:
+        print("ERROR: IBM_TOKEN and IBM_INSTANCE must be set (source .env first)")
         sys.exit(1)
+
+    backend_prefs = IBMBackendPreferences(
+        backend_name=IBM_BACKEND,
+        access_token=IBM_TOKEN,
+        channel=IBM_CHANNEL,
+        instance_crn=IBM_INSTANCE,
+    )
+    run_bell(f"IBM {IBM_BACKEND} (your credentials)", backend_prefs)
