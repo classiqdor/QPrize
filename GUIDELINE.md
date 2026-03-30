@@ -15,7 +15,9 @@ Working conventions for the QPrize project. Both humans and Claude instances sho
   - Export `solve(num_bits: int) -> int` that synthesizes + executes + returns recovered d
   - Call `play_ending_sound()` when finished
   - Use `timed()` context managers around slow steps
-  - Save the synthesis result to `attempts/results/attempt_NNN_<bits>bit.json` (create dir if needed)
+  - After synthesis, save two files to `attempts/results/` (create dir if needed):
+    1. `attempt_NNN_<bits>bit.qprog` — raw Classiq circuit via `qprog.save(path)`
+    2. `attempt_NNN_<bits>bit_meta.json` — human-readable summary (see format below)
 - After verifying an attempt works, **append** it to `attempts/registry.py` (never edit past entries)
 - Add a row to `attempts/RESULTS.md` for each synthesis run with: attempt name, bits, qubit width, circuit depth, CX count, success (✅/❌)
 - Never delete or modify old attempt files
@@ -33,7 +35,22 @@ Append one row per synthesis run (not per attempt file). Columns:
 - **CX** = two-qubit gate count (from `GeneratedCircuit.data.transpiled_circuit.count_ops["cx"]` or equivalent)
 - **Success** = ✅ if `solve()` returned the correct `d`, ❌ otherwise
 
-The JSON result file (saved to `attempts/results/`) should include the same fields plus the raw `GeneratedCircuit` metadata. Use `GeneratedCircuit.save(path)` or serialize manually.
+The `_meta.json` file must be a plain JSON object with at minimum:
+```json
+{
+  "attempt": "attempt_008_2026-03-29_1859",
+  "bits": 4,
+  "qubits": 28,
+  "depth": 1050,
+  "cx": 716,
+  "gate_counts": {"cx": 716, "u3": 120, ...},
+  "decoded_d": 6,
+  "expected_d": 6,
+  "success": true
+}
+```
+Write this file immediately after synthesis (before execution) for `qubits`/`depth`/`cx`/`gate_counts`,
+then update `decoded_d`/`success` after execution. Or write once at the end with all fields.
 
 ---
 

@@ -282,16 +282,19 @@ def solve(num_bits: int) -> int:
 
     ops      = qprog.transpiled_circuit.count_ops
     cx_count = ops.get("cx", "N/A")
-    print(f"  Qubits: {qprog.data.width} | Depth: {qprog.transpiled_circuit.depth} | CX: {cx_count}")
+    n_qubits = qprog.data.width
+    depth    = qprog.transpiled_circuit.depth
+    print(f"  Qubits: {n_qubits} | Depth: {depth} | CX: {cx_count}")
 
     results_dir = os.path.join(os.path.dirname(__file__), "results")
     os.makedirs(results_dir, exist_ok=True)
-    result_path = os.path.join(results_dir, f"attempt_008_{num_bits}bit.json")
+    stem = f"attempt_008_{num_bits}bit"
+
+    # Save raw Classiq circuit
     try:
-        qprog.save(result_path)
-        print(f"  Saved to {result_path}")
+        qprog.save(os.path.join(results_dir, f"{stem}.qprog"))
     except Exception as e:
-        print(f"  Warning: could not save: {e}")
+        print(f"  Warning: could not save qprog: {e}")
 
     # -----------------------------------------------------------------------
     # Execute
@@ -317,8 +320,26 @@ def solve(num_bits: int) -> int:
     recovered = int(df_valid["d_cand"].mode()[0])
     ok = recovered == known_d
     print(f"  Recovered d={recovered}, expected d={known_d} → {'✅' if ok else '❌'}")
-    assert ok, f"MISMATCH: got {recovered}, expected {known_d}"
 
+    # Save human-readable result summary (per GUIDELINE.md)
+    import json
+    meta = {
+        "attempt": "attempt_008_2026-03-29_1859",
+        "bits": num_bits,
+        "qubits": n_qubits,
+        "depth": depth,
+        "cx": cx_count,
+        "gate_counts": {k: v for k, v in ops.items()},
+        "decoded_d": recovered,
+        "expected_d": known_d,
+        "success": bool(ok),
+    }
+    meta_path = os.path.join(results_dir, f"{stem}_meta.json")
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2)
+    print(f"  Meta saved to {meta_path}")
+
+    assert ok, f"MISMATCH: got {recovered}, expected {known_d}"
     play_ending_sound()
     return recovered
 
