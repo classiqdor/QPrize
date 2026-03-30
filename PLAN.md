@@ -99,6 +99,7 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 | Replace `mock_modular_inverse` with Kaliski's algorithm — polynomial in p_bits instead of O(p) lookup table | Haner 2020, attempts 007/008 | Large — also removes the `lookup inverse` legitimacy cheat |
 | Exploit `a=0` — point doubling simplifies to `slope = 3x²/2y`, saving gates in the slope computation | All competition curves have `a=0` | Medium |
 | Windowed EC oracle — group x1/x2 bits into windows of width w; replace 2·var_len controlled additions with 2·var_len/w larger ones | Haner 2020 §windowed | Medium — fewer oracle calls |
+| Lookup tables for modular arithmetic — replace `modular_multiply`, `modular_square`, `modular_subtract` with QROM lookup tables (classical truth table → quantum ROM). For small p, the table fits in memory and the depth is O(log p) instead of O(p²). Same trick as `mock_modular_inverse` but applied to all expensive arithmetic ops inside `ec_point_add`. | Gidney blog; schoolbook mult paper | Potentially large depth reduction — arithmetic dominates depth |
 | Approximate QFT on x1/x2 — drop small-angle rotations below hardware noise floor | research.md §Approximate QFT | Small (~8% of CX) |
 
 **Milestone:** Once a variant reaches ≤ 1,000 CX for 4-bit, test on simulator; if fidelity is adequate, run on hardware.
