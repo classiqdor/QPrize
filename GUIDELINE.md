@@ -229,3 +229,27 @@ If you find yourself computing `(n − d) % n`, looking up d in a lookup table, 
 - Do not edit past entries in `registry.py` or `log.txt`
 - Do not add `Co-Authored-By` to commit messages
 - Do not use the full venv path (e.g. `/path/to/venv/bin/python`); activate the venv first
+
+---
+
+## Scalability requirement
+
+**The oracle must be scalable to large key sizes.**
+
+### What is NOT scalable
+Attempts 002–006 use "group-index encoding": the quantum register holds a scalar `k` meaning the point `k·G`. Deriving the oracle constant for `Q = d·G` requires enumerating all `n` group elements:
+
+```python
+for k in range(n):
+    point_to_index[k * G] = k  # O(n) = O(2^bits) work
+```
+
+For small competition sizes (n ≤ ~10^6) this is feasible, but for real cryptographic sizes (n ≈ 2^256) it is completely infeasible. This does NOT constitute a scalable quantum algorithm.
+
+### What is scalable
+Classical precomputation must be **polynomial in the key length** — e.g., O(var_len) EC doublings to compute `[G, 2G, 4G, ...]` and `[-Q, -2Q, -4Q, ...]`.
+
+The quantum oracle itself may be designed in many ways — coordinate-based EC arithmetic, novel encodings, or recent algorithmic improvements (e.g., https://eprint.iacr.org/2025/1887.pdf) — as long as the circuit size grows polynomially with the key size.
+
+Reference paper: https://inria.hal.science/hal-04848612v1/document
+(Chevignard, Fouque, Schrottenloher 2025 — qubit reduction via truncated output and Ekerå-Håstad sampling)

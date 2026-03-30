@@ -20,6 +20,8 @@ One row per synthesis run. Add a row each time you run `solve()` and record the 
 | attempt_004B_2026-03-29_1900 | 4 | 11 | 1050 | 716 | ✅ (d=6) |
 | attempt_004B_2026-03-29_1900 | 6 | 16 | 1271 | 1,252 | ✅ (d=18) |
 | attempt_006B_2026-03-29_1900 | 4 | — | — | — | not yet run |
+| attempt_007_2026-03-29_1840 | 4 | — | — | — | (pending — coordinate encoding, Kaliski inverse) |
+| attempt_008_2026-03-29_1859 | 4 | — | — | — | (pending — coordinate encoding, Kaliski inverse, named QNum vars) |
 
 \* Oracle was later found to be circular (encoded `neg_q_step = (n-d) % n` — required knowing `d` in advance).
   Returned the correct `d` but did not constitute a valid solution to ECDLP.

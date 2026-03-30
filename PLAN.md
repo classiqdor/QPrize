@@ -106,7 +106,11 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 | 004 (1507) | 2026-03-29 15:07 | **Quantum EC arithmetic** — EllipticCurvePoint (x,y) QStruct, quantum ec_point_add | TBD | TBD | Unverified — correct but expensive |
 | 004 (1600) | 2026-03-29 16:00 | **Classical enumeration** — derive negq_steps from Q via EC point lookup table, same scalar oracle | 716 | 1,252 | ✅ Verified (d=6, d=18, d=56) |
 | 005 | 2026-03-29 | **Truncated var_len** — var_len=4 (1022 CX) and var_len=3 (778 CX) for 6-bit | — | 1022/778 | ❌ Fails — N must be ≥ n for QFT peaks to resolve |
-| 006 | 2026-03-29 | **Genuine ECDLP** — EC coordinate register (x,y)∈F_p, Roetteler 2017, d never used | ~130k CX | — | Synthesized (28q, 129938 CX), execution in progress |
+| 006 (ec_coords) | 2026-03-29 | **Genuine ECDLP** — EC coordinate register (x,y)∈F_p, Roetteler 2017, d never used | ~130k CX | — | Synthesized (28q, 129938 CX), execution timed out |
+| 004B | 2026-03-29 19:00 | Re-verified 004-1600 with cleaner run | 716 | 1,252 | ✅ (d=6, d=18) |
+| 006B | 2026-03-29 19:00 | (pending) | — | — | Not yet run |
+| 007 | 2026-03-29 18:40 | **Scalable coordinate oracle** — Kaliski modular inverse (QNum[…]() vars), Roetteler 2017 | TBD | TBD | Written, not yet run |
+| 008 | 2026-03-29 18:59 | **Scalable coordinate oracle** — same as 007, named QNum("name",n) vars for better synthesis output | TBD | TBD | Written, not yet run |
 
 ### ⚠️ Correctness: attempts 002B–005 are NOT genuine ECDLP
 
@@ -115,25 +119,24 @@ the quantum circuit: `negq_steps[i] = (n − point_to_index[2^i·Q]) % n` looks 
 scalar index via a brute-force enumeration of the EC group — that IS the discrete log.
 The quantum circuit then does integer arithmetic in Z_n (DLP in Z_n, trivially easy).
 
-The genuine ECDLP approach (004-1507, 006) uses EC coordinates (x,y) in F_p for the
+The genuine ECDLP approach (004-1507, 006, 007, 008) uses EC coordinates (x,y) in F_p for the
 oracle register, and derives neg_q_powers by EC point doubling of Q without knowing d.
 See GUIDELINE.md "Genuine ECDLP vs. the Scalar-Encoding Flaw".
 
 ### Two approaches to fixing the oracle (both correct, different cost):
 
-**004-1507 (quantum EC arithmetic):**
+**004-1507 / 006 / 007 / 008 (quantum EC arithmetic):**
 - Oracle register holds (x, y) coordinates mod p
 - `ec_scalar_mult_add` does controlled quantum EC point addition
-- Uses lookup-table modular inverse (feasible for small p)
-- More expensive but scales to sizes where group enumeration is infeasible
+- 004-1507/006: lookup-table modular inverse (feasible for small p, not scalable)
+- 007/008: Kaliski modular inverse (O(p_bits²) gates, scalable to any key size)
 - Does not assume knowledge of d at any point
 
-**004-1600 (classical enumeration + scalar oracle) — NOT genuine ECDLP:**
+**004-1600 / 004B (classical enumeration + scalar oracle) — NOT scalable:**
 - Classically enumerates all n EC group elements to build point→index table
 - Uses this to find index of 2^i*Q without knowing d
 - Same cheap scalar oracle (modular additions mod n) as 002B/003
 - Feasible for competition sizes (n ≤ ~50000), infeasible for cryptographic sizes
-- Does not assume knowledge of d; uses only public G, Q, p, n
 
 ---
 
