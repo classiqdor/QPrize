@@ -22,11 +22,11 @@ Two fundamentally different oracle approaches. Optimizations within a method don
 
 ---
 
-## Current Status (2026-03-29)
+## Current Status (2026-03-30)
 
 | Bits | Attempts | Best CX | Fidelity | Status |
 |------|----------|---------|----------|--------|
-| 4    | 002B, 003, 004 | 716 CX | ~2.8% | ✅ Working (simulator + hardware) |
+| 4    | 002B, 003, 004, example_scalar | 716 CX | ~2.8% | ✅ Working (simulator + **IBM ibm_torino hardware** ✅, d=6 recovered, ~38s) |
 | 6    | 002B, 003, 004 | 1,252 CX | ~0.15% | ✅ Simulator only — too noisy for hardware |
 | 7+   | —        | —       | —        | ❌ Not attempted |
 
