@@ -1,5 +1,25 @@
 # QPrize — Shor's ECDLP on Quantum Hardware
 
+## For Claude (start here)
+
+Run `/resync` at the start of every session, and periodically while working (every ~30 min) since multiple Claude instances and humans may be pushing in parallel.
+
+```
+/resync
+```
+
+`/resync` does `git pull --rebase` then reads:
+- **GUIDELINE.md** — naming conventions, what `solve()` must do, results format, Classiq SDK patterns, git workflow
+- **PLAN.md** — strategy, oracle method comparison, current CX counts, priority-ordered optimization roadmap, full attempt history
+- **attempts/registry.py** — append-only list of verified working attempts
+- **attempts/RESULTS.md** — one row per synthesis run (qubits, depth, CX, success, legitimacy)
+- **worklog/** (latest) — what the previous session did, what failed, open questions
+
+> If `/resync` is not found, make sure you launched Claude from this folder (`/home/dor/Sources/Classiq/claude_repos`) and restart Claude so it picks up the `.claude/` directory.
+
+---
+
+
 Attempt to break the largest possible ECC key using Shor's algorithm on real quantum hardware, as part of the [QDay Prize](https://www.qdayprize.org) competition (deadline: April 5, 2026).
 
 All competition curves use `y² = x³ + 7 (mod p)` — the same form as Bitcoin's secp256k1.
