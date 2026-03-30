@@ -40,6 +40,8 @@ class Parameters:
 
 
 PARAMS = {
+    # Test curves (smaller p → faster synthesis for scalable coordinate attempts)
+    3:  Parameters(bits=3,  p=7,       order_E=7,       n=7,       h=1, G=(3,  2),      d=3,     Q=(6,  5),  a=0, b=5),
     4:  Parameters(bits=4,  p=13,      order_E=7,       n=7,       h=1, G=(11, 5),      d=6,     Q=(11, 8)),
     6:  Parameters(bits=6,  p=43,      order_E=31,      n=31,      h=1, G=(34, 3),      d=18,    Q=(21, 25)),
     7:  Parameters(bits=7,  p=67,      order_E=79,      n=79,      h=1, G=(48, 60),     d=56,    Q=(52, 7)),
