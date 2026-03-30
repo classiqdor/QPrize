@@ -24,6 +24,8 @@ One row per synthesis run. Add a row each time you run `solve()` and record the 
 | attempt_008_2026-03-29_1859 | 4 | — | — | — | pending | `none` |
 | attempt_example_scalar | 4 | 11 | 1050 | 716 | ✅ (d=6) | `group enum` |
 | attempt_example_scalar | 6 | 17 | 3280 | 2,910 | ✅ (d=18) | `group enum` |
+| attempt_011_2026-03-30_1210 | 4 | 26 | 226,377 | 136,106 | ✅ (d=6) | `none` |
+| attempt_012_2026-03-30_1621 | 4 | 28 | 105,378 | 105,554 | ✅ (d=6) | `none` |
 
 \* Oracle was later found to be circular (`neg_q_step = (n-d) % n` — `d` required in advance).
   Returned the correct `d` but did not constitute a valid solution to ECDLP.

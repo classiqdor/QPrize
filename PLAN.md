@@ -89,18 +89,64 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 
 **Why this attempt:** It is the only fully legitimate Method B implementation — no `d in oracle`, no `group enum`, no `lookup inverse` (once the inverse is fixed). It is the right thing to make fast.
 
-**Current cost:** ~130,000 CX for 4-bit. Target: ≤ ~500 CX for hardware viability (IBM 5% fidelity threshold).
+**Best so far:** 105,554 CX (attempt_012, 4-bit). Target: ≤ ~500 CX for hardware viability (IBM 5% fidelity threshold).
 
-**Approach:** Create numbered attempt variants (e.g. `010`, `011`, ...), each applying one idea from `research.md`. Measure depth + CX after each change. Ideas to try, roughly in priority order:
+### Profiling data (p=13, 4-bit, isolated measurements)
 
-| Idea | Source | Expected impact |
-|------|--------|----------------|
-| Projective/Jacobian coordinates — eliminate `mock_modular_inverse` entirely; point addition uses only multiplications | Roetteler 2017 §3, Haner 2020 | Large — inverse dominates cost |
-| Replace `mock_modular_inverse` with Kaliski's algorithm — polynomial in p_bits instead of O(p) lookup table | Haner 2020, attempts 007/008 | Large — also removes the `lookup inverse` legitimacy cheat |
-| Exploit `a=0` — point doubling simplifies to `slope = 3x²/2y`, saving gates in the slope computation | All competition curves have `a=0` | Medium |
-| Windowed EC oracle — group x1/x2 bits into windows of width w; replace 2·var_len controlled additions with 2·var_len/w larger ones | Haner 2020 §windowed | Medium — fewer oracle calls |
-| Lookup tables for modular arithmetic — replace `modular_multiply`, `modular_square`, `modular_subtract` with QROM lookup tables (classical truth table → quantum ROM). For small p, the table fits in memory and the depth is O(log p) instead of O(p²). Same trick as `mock_modular_inverse` but applied to all expensive arithmetic ops inside `ec_point_add`. | Gidney blog; schoolbook mult paper | Potentially large depth reduction — arithmetic dominates depth |
-| Approximate QFT on x1/x2 — drop small-angle rotations below hardware noise floor | research.md §Approximate QFT | Small (~8% of CX) |
+| Operation | Isolated CX | Notes |
+|-----------|-------------|-------|
+| `modular_inverse_lookup` (inv_lookup) | 118 | 1D, p=13 entries, Const[QNum] — already optimal |
+| `sq_lookup` | 120 | 1D, p=13 entries, Const[QNum] — 24× cheaper than modular_square |
+| `modular_multiply` | 2527 | No good 2D alternative found yet |
+| `mul_lookup` (bind, 2D) | 2040 | Cheaper isolated, but adds overhead in within_apply context |
+| `modular_square` | 2852 | Replaced by sq_lookup in attempt_012 |
+| DM multiply (demultiplexed) | 4436 | Worse than arithmetic |
+
+### Per-addition cost breakdown (attempt_012)
+
+| Step | Operation | CX |
+|------|-----------|-----|
+| 3 | within_apply(inv_lookup × 2, body: modular_multiply) | 2,763 |
+| 4 | within_apply(modular_multiply × 2, body: xor) | 5,054 |
+| 5 | within_apply(sq_lookup × 2, body: cheap) | 240 |
+| 6 | modular_multiply (standalone) | 2,527 |
+| 7 | within_apply(inv_lookup × 2, nested_within_apply(mul × 2, xor)) | 5,290 |
+| 1,2,8 | modular_add_constant_inplace × 6 | ~cheap |
+| **Total** | | **~15,874** |
+
+6 additions × 15,874 ≈ 95k + overhead = 105k CX observed.
+
+### Key insight: 1D vs 2D lookup table behavior
+
+- **1D lookup (Const[QNum] input, no bind):** Classiq synthesizes efficiently. sq_lookup at 13 entries = 120 CX.
+- **2D lookup (bind required):** bind adds overhead. In `within_apply` COMPUTE position, runs TWICE → 2× overhead. This killed attempt_011 (mul_lookup in compute → 136k CX, worse than baseline).
+- **2D lookup OUTSIDE within_apply:** bind runs only ONCE. Should be ~linear scaling from 1D cost. Attempting in attempt_014 (slope_lookup).
+
+### Synthesis time observations
+
+| Attempt | optimization_level | Synthesis time | CX |
+|---------|--------------------|----------------|----|
+| attempt_012 | 1 | 506s | 105,554 |
+| attempt_011 | 1 | 1052s | 136,106 |
+| attempt_013 | 3 | TBD | TBD |
+
+**Approach:** Create numbered attempt variants (e.g. `013`, `014`, ...), each applying one idea. Current active:
+
+| Attempt | Idea | Status |
+|---------|------|--------|
+| 013 | optimization_level=3, same code as 012 | Running |
+| 014 | slope_lookup (2D, outside within_apply) to replace steps 3+7 | Running |
+
+### Ideas still to try (roughly in priority order)
+
+| Idea | Expected impact | Notes |
+|------|----------------|-------|
+| slope_lookup outside within_apply (attempt_014) | ~85k CX? (-20k) | Replace steps 3+7 with 2D lookup; bind runs once not twice |
+| optimization_level=3 (attempt_013) | 5–15% | Free win if synthesizer finds more cancellations |
+| Replace step 4 (modular_multiply in compute) | ~20k (-5054 CX/addition) | No good 2D alternative known; bind doubles overhead |
+| Full EC point lookup (attempt_010 approach) | Large if synthesis works | 256-entry table for whole addition; attempt_010 timed out at 3600s |
+| Projective/Jacobian coordinates | Unclear at small scale | inv_lookup already cheap (118 CX); more muls may hurt |
+| Kaliski modular inverse | Removes lookup table, scalable | Adds gate overhead vs lookup table |
 
 **Milestone:** Once a variant reaches ≤ 1,000 CX for 4-bit, test on simulator; if fidelity is adequate, run on hardware.
 
@@ -150,6 +196,11 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 | 006B | 2026-03-29 19:00 | (pending) | — | — | Not yet run |
 | 007 | 2026-03-29 18:40 | **Scalable coordinate oracle** — Kaliski modular inverse (QNum[…]() vars), Roetteler 2017 | TBD | TBD | Written, not yet run |
 | 008 | 2026-03-29 18:59 | **Scalable coordinate oracle** — same as 007, named QNum("name",n) vars for better synthesis output | TBD | TBD | Written, not yet run |
+| 010 | 2026-03-30 11:38 | Full EC point addition via packed 256-entry lookup table (Bennett trick), flat QNum oracle register | — | — | ❌ Synthesis timed out (3600s) |
+| 011 | 2026-03-30 12:10 | mul_lookup (2D bind) + sq_lookup + inv_lookup — flat ex, ey | 136,106 | — | ✅ d=6 but WORSE than baseline (bind in COMPUTE doubles overhead) |
+| 012 | 2026-03-30 16:21 | sq_lookup only (replaces modular_square) — all else unchanged | 105,554 | — | ✅ d=6 (**best so far, 19% improvement**) |
+| 013 | 2026-03-30 18:15 | optimization_level=3 on attempt_012 | TBD | — | Running |
+| 014 | 2026-03-30 18:15 | slope_lookup (2D, outside within_apply) to replace steps 3+7 | TBD | — | Running |
 
 ### ⚠️ Correctness: attempts 002B–005 are NOT genuine ECDLP
 

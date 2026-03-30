@@ -1,0 +1,14 @@
+{
+  "attempt": "attempt_011_2026-03-30_1210",
+  "bits": 4,
+  "qubits": 26,
+  "depth": 226377,
+  "cx": 136106,
+  "gate_counts": {
+    "u": 108324,
+    "cx": 136106
+  },
+  "decoded_d": 6,
+  "expected_d": 6,
+  "success": true
+}
