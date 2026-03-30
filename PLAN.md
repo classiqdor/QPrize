@@ -83,21 +83,31 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 - **Also measured:** mod 32 vs mod 31: only **8 CX less per addition**. Mersenne trick saves little.
 - **Root cause:** Per-addition cost scales as ~4n² CX (Beauregard-style QFT comparison oracle is O(n²)). Constant structure cannot overcome this.
 
-### 🥇 Priority 1: Quantinuum H-Series Hardware for 7-bit
+### 🥇 Priority 1: Optimize `attempt_example_ec` toward hardware viability
+
+**Goal:** Take `attempt_example_ec` (the clean, legitimate EC oracle baseline) and systematically reduce its depth/CX until it can run on real quantum hardware. This is the core research direction — all optimizations should be variants of this attempt.
+
+**Why this attempt:** It is the only fully legitimate Method B implementation — no `d in oracle`, no `group enum`, no `lookup inverse` (once the inverse is fixed). It is the right thing to make fast.
+
+**Current cost:** ~130,000 CX for 4-bit. Target: ≤ ~500 CX for hardware viability (IBM 5% fidelity threshold).
+
+**Approach:** Create numbered attempt variants (e.g. `010`, `011`, ...), each applying one idea from `research.md`. Measure depth + CX after each change. Ideas to try, roughly in priority order:
+
+| Idea | Source | Expected impact |
+|------|--------|----------------|
+| Projective/Jacobian coordinates — eliminate `mock_modular_inverse` entirely; point addition uses only multiplications | Roetteler 2017 §3, Haner 2020 | Large — inverse dominates cost |
+| Replace `mock_modular_inverse` with Kaliski's algorithm — polynomial in p_bits instead of O(p) lookup table | Haner 2020, attempts 007/008 | Large — also removes the `lookup inverse` legitimacy cheat |
+| Exploit `a=0` — point doubling simplifies to `slope = 3x²/2y`, saving gates in the slope computation | All competition curves have `a=0` | Medium |
+| Windowed EC oracle — group x1/x2 bits into windows of width w; replace 2·var_len controlled additions with 2·var_len/w larger ones | Haner 2020 §windowed | Medium — fewer oracle calls |
+| Approximate QFT on x1/x2 — drop small-angle rotations below hardware noise floor | research.md §Approximate QFT | Small (~8% of CX) |
+
+**Milestone:** Once a variant reaches ≤ 1,000 CX for 4-bit, test on simulator; if fidelity is adequate, run on hardware.
+
+### 🥈 Priority 2: Quantinuum H-Series Hardware for 7-bit (Method A)
 - **Idea:** Quantinuum H2 has ~99.9% 2Q fidelity. For 7-bit (3212 CX): 0.999^3212 ≈ 4.1% fidelity. Much better than IBM (0.15% for 6-bit). Could get correct answers.
 - **Impact:** Demonstrate 7-bit ECDLP (d=56) on hardware — likely the competition goal.
 - **Status:** Need to check Classiq backend list and obtain Quantinuum access.
 - **Next step:** Check available backends via Classiq SDK, request access.
-
-### 🥈 Priority 2: Optimize `ec_point_add` (EC Oracle bottleneck)
-- **Problem:** `ec_point_add` (Roetteler et al. 2017 Alg. 1) dominates gate count in Method B attempts (006, 006B). At 4-bit it already produces ~129,938 CX — execution timed out. The function calls `mock_modular_inverse` (lookup table), `modular_multiply`, `modular_square`, and several `within_apply` layers.
-- **Ideas to explore:**
-  - Replace `mock_modular_inverse` (lookup table, exponential in p_bits) with Kaliski's modular inverse (polynomial in p_bits, already implemented in attempts 007/008)
-  - Use projective/Jacobian coordinates to eliminate the modular inverse entirely — point addition becomes multiply-only (attempt_009 direction)
-  - Reduce `within_apply` nesting depth — each layer doubles ancilla cost
-  - Check if Classiq's `optimization_level=3` collapses any of the within_apply chains automatically
-- **Status:** Unoptimized. 4-bit synthesizes (28 qubits) but CX is ~130k — far too expensive to execute.
-- **Next step:** Profile which sub-operation dominates CX (inverse vs multiply vs square). Try projective coordinates first since it removes the inverse entirely.
 
 ### 🥉 Priority 3: Alternative Algorithm with Fewer Oracle Calls
 - **Idea:** Windowed exponentiation or Regev-style multi-dimensional period finding to reduce number of controlled additions (currently 2×var_len = 10).
