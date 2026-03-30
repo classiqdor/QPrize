@@ -89,7 +89,17 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 - **Status:** Need to check Classiq backend list and obtain Quantinuum access.
 - **Next step:** Check available backends via Classiq SDK, request access.
 
-### 🥈 Priority 2: Alternative Algorithm with Fewer Oracle Calls
+### 🥈 Priority 2: Optimize `ec_point_add` (EC Oracle bottleneck)
+- **Problem:** `ec_point_add` (Roetteler et al. 2017 Alg. 1) dominates gate count in Method B attempts (006, 006B). At 4-bit it already produces ~129,938 CX — execution timed out. The function calls `mock_modular_inverse` (lookup table), `modular_multiply`, `modular_square`, and several `within_apply` layers.
+- **Ideas to explore:**
+  - Replace `mock_modular_inverse` (lookup table, exponential in p_bits) with Kaliski's modular inverse (polynomial in p_bits, already implemented in attempts 007/008)
+  - Use projective/Jacobian coordinates to eliminate the modular inverse entirely — point addition becomes multiply-only (attempt_009 direction)
+  - Reduce `within_apply` nesting depth — each layer doubles ancilla cost
+  - Check if Classiq's `optimization_level=3` collapses any of the within_apply chains automatically
+- **Status:** Unoptimized. 4-bit synthesizes (28 qubits) but CX is ~130k — far too expensive to execute.
+- **Next step:** Profile which sub-operation dominates CX (inverse vs multiply vs square). Try projective coordinates first since it removes the inverse entirely.
+
+### 🥉 Priority 3: Alternative Algorithm with Fewer Oracle Calls
 - **Idea:** Windowed exponentiation or Regev-style multi-dimensional period finding to reduce number of controlled additions (currently 2×var_len = 10).
 - **Status:** Needs research. Windowed approach: group var_len bits into windows of w, reduces additions from 2n to 2n/w at cost of 2^w different lookup values per window.
 - **Next step:** Research Regev (2023) and windowed approach applicability to ECDLP.
