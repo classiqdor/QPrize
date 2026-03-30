@@ -4,6 +4,24 @@
 
 ---
 
+## Oracle Methods
+
+Two fundamentally different oracle approaches. Optimizations within a method don't change its row here.
+
+| Method | Oracle register | Classical precomputation | Legit ECDLP? | Attempts |
+|--------|----------------|--------------------------|--------------|---------|
+| **A — Scalar Oracle** | Integer k ∈ Z_n (scalar index of the EC group element) | Enumerate all n EC group elements to build point→index table; look up scalar index of 2^i·Q. This enumeration IS solving the DLog classically — d is known before the circuit runs. | ❌ DLP in (Z_n, +) | 002, 002B, 003, 004-1600, 004B, 005, example_scalar |
+| **B — EC Oracle** | EC coordinates (x, y) ∈ F_p × F_p | EC doublings of G and Q (no d). `g_powers[i] = 2^i·G`, `neg_q_powers[i] = −(2^i·Q)` — only public points used. | ✅ Genuine ECDLP | 004-1507, 006, 006B, example_ec |
+
+### Other possible oracle methods (not yet attempted)
+
+| Method | Idea | Expected benefit |
+|--------|------|-----------------|
+| **C — Windowed EC Oracle** | Group var_len bits into windows of width w; precompute 2^w window offsets. Reduces controlled additions from 2·var_len to 2·var_len/w at cost of wider superposition register. | Fewer (but larger) oracle calls — unclear net CX savings |
+| **D — Regev 2023** | Multi-dimensional period finding; runs several shorter quantum computations and combines results classically. Reduces qubit count at the cost of more circuit repetitions. | Potentially fewer qubits; unclear CX impact for EC case |
+
+---
+
 ## Current Status (2026-03-29)
 
 | Bits | Attempts | Best CX | Fidelity | Status |
