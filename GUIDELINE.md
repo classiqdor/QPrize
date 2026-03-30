@@ -19,21 +19,26 @@ Working conventions for the QPrize project. Both humans and Claude instances sho
     1. `attempt_NNN_<bits>bit.qprog` — raw Classiq circuit via `qprog.save(path)`
     2. `attempt_NNN_<bits>bit_meta.json` — human-readable summary (see format below)
 - After verifying an attempt works, **append** it to `attempts/registry.py` (never edit past entries)
-- Add a row to `attempts/RESULTS.md` for each synthesis run with: attempt name, bits, qubit width, circuit depth, CX count, success (✅/❌)
+- Add a row to `attempts/RESULTS.md` for each synthesis run with: attempt name, bits, qubit width, circuit depth, CX count, success, and legitimacy
 - Never delete or modify old attempt files
 
 ### Results table (`attempts/RESULTS.md`)
 
 Append one row per synthesis run (not per attempt file). Columns:
 
-| Attempt | Bits | Width | Depth | CX | Success |
-|---------|------|-------|-------|----|---------|
-| attempt_004_2026-03-29_1507 | 4 | 11 | ... | 716 | ✅ |
+| Attempt | Bits | Width | Depth | CX | Success | Legitimacy |
+|---------|------|-------|-------|----|---------|------------|
+| attempt_004_2026-03-29_1507 | 4 | 11 | ... | 716 | ✅ | `group enum` |
 
 - **Width** = number of qubits (from `GeneratedCircuit.data.width`)
 - **Depth** = circuit depth (from `GeneratedCircuit.data.depth`)
 - **CX** = two-qubit gate count (from `GeneratedCircuit.data.transpiled_circuit.count_ops["cx"]` or equivalent)
 - **Success** = ✅ if `solve()` returned the correct `d`, ❌ otherwise
+- **Legitimacy** = shortcuts that would not work at cryptographic scale. Use these tags (comma-separate multiples):
+  - `d in oracle` — `d` appears directly in circuit constants; circuit is a tautology, not ECDLP
+  - `group enum` — oracle constants derived by enumerating all n EC group elements; O(n) work, infeasible for cryptographic n
+  - `lookup inverse` — modular inverse via lookup table of size p; O(p) memory, infeasible for cryptographic p
+  - ✅ `none` — no known shortcuts; would scale to cryptographic sizes
 
 The `_meta.json` file must be a plain JSON object with at minimum:
 ```json
