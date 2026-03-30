@@ -132,18 +132,18 @@ def solve(num_bits: int) -> int:
     # -----------------------------------------------------------------------
 
     @qperm
-    def scalable_modular_inverse(inp: Const[QNum], result: QNum) -> None:
-        """Compute result ^= inp⁻¹ mod p (Kaliski algorithm, scalable)."""
+    def scalable_modular_inverse(inp: Const[QNum], out: QNum) -> None:
+        """Compute out ^= inp⁻¹ mod p (Kaliski algorithm, scalable)."""
         # v is a copy of inp that modular_inverse_inplace will modify in place.
         # m holds the Kaliski ancilla (allocated by modular_inverse_inplace,
         # freed automatically by within_apply's uncompute step).
         v: QNum = QNum("inv_v", p_bits)
-        m: QArray[QBit] = QArray[QBit]()
+        m = QArray[QBit]()
         allocate(p_bits, False, 0, v)
         v ^= inp                    # v = inp (copy; Const inp is not modified)
         within_apply(
             lambda: modular_inverse_inplace(p, v, m),   # v → v⁻¹, m allocated
-            lambda: inplace_xor(v, result),              # result ^= v⁻¹
+            lambda: inplace_xor(v, out),                 # out ^= v⁻¹
         )
         # within_apply uncompute: modular_inverse_inplace reversed → v = inp, m freed
         v ^= inp                    # v = inp XOR inp = 0
@@ -224,16 +224,23 @@ def solve(num_bits: int) -> int:
         free(t1)
 
     # -----------------------------------------------------------------------
-    # Controlled scalar multiplication: ecp ← ecp + k·P
+    # Controlled scalar multiplication — two separate functions so that
+    # the classical power lists are captured via closure (not passed as
+    # parameters, which would confuse Classiq's CArray type checker).
     # -----------------------------------------------------------------------
 
     @qperm
-    def ec_scalar_mult_add(
-        ecp: EllipticCurvePoint, k: QArray[QBit], powers: list
-    ) -> None:
-        """ecp ← ecp + k·P, where powers = [P, 2P, 4P, ...] (classical)."""
-        for i in range(k.size):
-            pt = powers[i]
+    def add_g_powers(ecp: EllipticCurvePoint, k: QArray[QBit]) -> None:
+        """ecp ← ecp + k·G  (g_powers captured from outer scope)."""
+        for i in range(var_len):
+            pt = g_powers[i]
+            control(k[i], lambda gx=pt[0], gy=pt[1]: ec_point_add(ecp, gx, gy))
+
+    @qperm
+    def add_neg_q_powers(ecp: EllipticCurvePoint, k: QArray[QBit]) -> None:
+        """ecp ← ecp − k·Q  (neg_q_powers captured from outer scope)."""
+        for i in range(var_len):
+            pt = neg_q_powers[i]
             control(k[i], lambda gx=pt[0], gy=pt[1]: ec_point_add(ecp, gx, gy))
 
     # -----------------------------------------------------------------------
@@ -261,8 +268,8 @@ def solve(num_bits: int) -> int:
         hadamard_transform(x2)
 
         # Oracle: ecp ← P0 + x1·G − x2·Q
-        ec_scalar_mult_add(ecp, x1, g_powers)        # + x1·G
-        ec_scalar_mult_add(ecp, x2, neg_q_powers)    # + x2·(−Q)
+        add_g_powers(ecp, x1)        # + x1·G
+        add_neg_q_powers(ecp, x2)    # + x2·(−Q)
 
         # Inverse QFT to expose period (m1, m2)
         invert(lambda: qft(x1))
