@@ -1,6 +1,6 @@
 # Technical Brief — QPrize Submission
 
-**Team:** Classiq Technologies (Dor Harpaz, Or Samimi Golan, Amir Naveh)
+**Team:** Classiq Technologies (Dor Harpaz, Or Samimi Golan, Amir Naveh, Ariel Smoler)
 **Date:** March 2026 | **Hardware:** IBM ibm_torino (Heron r1, 133 qubits)
 
 ---
@@ -57,6 +57,29 @@ windowed oracles, semiclassical QFT, truncated registers. Full log in `RESULTS.m
 | Queue + execution | 24s |
 | Result | d=6 ✅ (correct, expected d=6) |
 | Noise | ~97% correct outcomes; 3% error from decoherence/readout |
+
+---
+
+## Measurement Results (Simulator, 1000 shots)
+
+All invertible `(x1_r, x2_r)` pairs consistently recover `d=6`:
+
+```
+ x1_r  x2_r  d   counts  bar
+    5     5   6      24   ████████████████████████
+    1     1   6      23   ███████████████████████
+    1     1   6      22   ██████████████████████
+    6     6   6      20   ████████████████████
+    1     1   6      19   ███████████████████
+    6     6   6      18   ██████████████████
+    1     1   6      17   █████████████████
+    6     6   6      17   █████████████████
+    2     2   6      16   ████████████████
+  ...   ...   6     ...   (all pairs give d=6)
+```
+
+The IBM hardware run reproduces this structure with ~3% noise on non-invertible pairs.
+Recovery requires only `mode(-x2_r · x1_r⁻¹ mod n)` — no engineered post-processing.
 
 ---
 

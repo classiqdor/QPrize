@@ -13,9 +13,13 @@ Implements Shor's algorithm with an **EC coordinate oracle** (Method B):
 - Oracle computes `ecp = P0 + x1·G − x2·Q` using quantum EC arithmetic
 - Implements Roetteler, Naehrig, Svore, Lauter (2017) Algorithm 1
 
-**Legitimacy:** `d` is never used anywhere. The only non-scalable shortcut is
-`sq_lookup` (a lookup table for `x² mod p`), which has `p` entries — feasible
-for small competition primes but not for 256-bit cryptographic keys.
+**Legitimacy:** `d` is never used anywhere. Two non-scalable shortcuts remain:
+- `modular_inverse_lookup` — lookup table of `x⁻¹ mod p`, size `p` entries
+- `sq_lookup` — lookup table of `x² mod p`, size `p` entries
+
+Both are feasible for small competition primes (p=13) but not for 256-bit cryptographic
+keys (p ≈ 2²⁵⁶). Replacing them with Kaliski's modular inverse and schoolbook
+arithmetic would make the circuit fully scalable.
 
 ## Circuit specs (4-bit)
 

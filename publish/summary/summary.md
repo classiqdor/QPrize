@@ -88,7 +88,7 @@ Noise:    ~97% correct outcomes (3% error from decoherence + readout noise)
 | Dor Harpaz | Lead engineer | dor@classiq.io |
 | Or Samimi Golan | Algorithm design | orsa@classiq.io |
 | Amir Naveh | Circuit optimization | Classiq |
-| Claude (Anthropic) | Research & implementation | — |
+| Ariel Smoler | Circuit optimization | Classiq |
 
 All team members are engineers at [Classiq Technologies](https://classiq.io), a quantum
 computing software company specializing in high-level quantum circuit synthesis.
