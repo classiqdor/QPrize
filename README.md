@@ -1,10 +1,123 @@
 # QPrize — Shor's ECDLP on Quantum Hardware
 
-Authors: Amir Naveh, Or Samimi, Dor Harpaz, Ariel Smoler
+**Team:** Classiq Technologies
+**Submission deadline:** April 5, 2026
 
-## For Claude (start here)
+---
 
-Run `/resync` at the start of every session, and periodically while working (every ~30 min) since multiple Claude instances and humans may be pushing in parallel.
+## Contact Information
+
+| Name | Email | Organization |
+|------|-------|-------------|
+| Dor Harpaz | dor@classiq.io | Classiq Technologies |
+| Or Samimi Golan | orsa@classiq.io | Classiq Technologies |
+| Amir Naveh | — | Classiq Technologies |
+| Ariel Smoler | — | Classiq Technologies |
+
+**GitHub:** https://github.com/classiqdor/QPrize
+
+---
+
+## Professional Background
+
+We are engineers at [Classiq Technologies](https://classiq.io), a quantum computing
+software company that builds tools for high-level quantum circuit synthesis and optimization.
+Our team works daily with quantum algorithms, circuit synthesis, and hardware backends
+including IBM Quantum, IonQ, and Quantinuum.
+
+---
+
+## Key Length Tackled
+
+**4-bit ECC key** — competition curve `y² = x³ + 7 mod 13`, group order `n = 7`, private key `d = 6`.
+
+We provide two implementations at different points on the cost/legitimacy spectrum:
+
+| Solution | Qubits | CX | Hardware | Result |
+|----------|--------|----|----------|--------|
+| [Scalar oracle](publish/hardware_solution/) | 11 | 716 | IBM ibm_torino ✅ | d=6 recovered |
+| [EC arithmetic oracle](publish/scalable_solution/) | 28 | 105,554 | Simulator only | d=6 recovered |
+
+---
+
+## Quantum Computer Used
+
+**IBM ibm_torino** (IBM Quantum Network)
+
+| Spec | Value |
+|------|-------|
+| Processor | IBM Heron r1 |
+| Total qubits | 133 |
+| 2Q gate fidelity | ~99.5% (CX) |
+| Access method | Direct IBM Cloud credentials via Classiq SDK |
+
+---
+
+## Execution Instructions
+
+### Prerequisites
+
+```bash
+git clone https://github.com/classiqdor/QPrize
+cd QPrize
+python -m venv venv && source venv/bin/activate
+pip install classiq
+python -c "import classiq; classiq.authenticate()"
+```
+
+### Run on simulator (no credentials needed)
+
+```bash
+# Hardware-viable circuit (716 CX, scalar oracle)
+python publish/hardware_solution/solution.py
+
+# Scalable genuine-ECDLP circuit (~105k CX, takes ~9 min to synthesize)
+python publish/scalable_solution/solution.py 4
+```
+
+### Run on real IBM hardware
+
+```bash
+cp .env.example .env   # fill in IBM_TOKEN and IBM_INSTANCE
+set -a; source .env; set +a
+python publish/hardware_solution/solution.py --ibm
+```
+
+---
+
+## Submission Contents
+
+```
+publish/
+  hardware_solution/    — 716 CX scalar oracle; verified on IBM ibm_torino
+  scalable_solution/    — 105k CX genuine EC arithmetic (Roetteler 2017); simulator
+  competitor_reviews/   — comparison with other known submissions
+  summary/              — full solution writeup
+  brief.md              — technical brief (source for brief.pdf)
+attempts/RESULTS.md     — all 20+ synthesis runs (qubits, depth, CX, success)
+PLAN.md                 — optimization roadmap and decision log
+worklog/                — per-session activity logs
+```
+
+---
+
+## Algorithm Summary
+
+We implement Shor's ECDLP algorithm using two-register quantum phase estimation:
+
+1. Prepare superposition `|+⟩^{2·var_len}` over registers `x1`, `x2`
+2. Oracle: `ecp = P₀ + x1·G − x2·Q`
+3. Inverse QFT to extract the period
+4. Recover `d = −x2_r · x1_r⁻¹ mod n`
+
+Full technical details in [`publish/brief.md`](publish/brief.md) and [`publish/summary/summary.md`](publish/summary/summary.md).
+
+---
+
+## For Claude (start here for development sessions)
+
+Run `/resync` at the start of every session, and periodically while working (every ~30 min)
+since multiple Claude instances and humans may be pushing in parallel.
 
 ```
 /resync
@@ -17,121 +130,4 @@ Run `/resync` at the start of every session, and periodically while working (eve
 - **attempts/RESULTS.md** — one row per synthesis run (qubits, depth, CX, success, legitimacy)
 - **worklog/** (latest) — what the previous session did, what failed, open questions
 
-> If `/resync` is not found, make sure you launched Claude from this folder (`/home/dor/Sources/Classiq/claude_repos`) and restart Claude so it picks up the `.claude/` directory.
-
----
-
-
-Attempt to break the largest possible ECC key using Shor's algorithm on real quantum hardware, as part of the [QDay Prize](https://www.qdayprize.org) competition (deadline: April 5, 2026).
-
-All competition curves use `y² = x³ + 7 (mod p)` — the same form as Bitcoin's secp256k1.
-
----
-
-## Structure
-
-### `consts.py`
-All competition curve parameters for bit sizes 4–21, parsed from [curves.txt](https://www.qdayprize.org/curves.txt).
-
-```python
-from consts import PARAMS
-params = PARAMS[6]   # 6-bit curve
-print(params.p, params.n, params.G, params.Q, params.d)
-```
-
-Each `Parameters` object holds: `bits`, `p`, `order_E`, `n`, `h`, `G`, `Q`, `d`, `a=0`, `b=7`.
-
----
-
-### `attempts/`
-Each attempt is a self-contained Python file named `attempt_NNN[letter]_YYYY-MM-DD_HHMM.py`.
-
-Every attempt exports a `solve(num_bits: int) -> int` function that synthesizes and executes the circuit, and returns the recovered private key `d`.
-
-The header comment of each file explains what changed from the previous attempt and why.
-
-**Naming convention:**
-- `attempt_002` → the attempt as originally written
-- `attempt_002B` → a revised version of the same attempt (refactored, not a new idea)
-- `attempt_003` → a new optimization idea
-
-**Current attempts:**
-
-| File | Bit sizes | Key idea |
-|---|---|---|
-| `attempt_001` | 4 | Naive (x,y) coordinate representation — obsolete |
-| `attempt_002` | 4, 6 | Group-index encoding baseline (standalone script) |
-| `attempt_002B` | 4, 6 | Same, refactored to export `solve()` |
-| `attempt_003` | 4, 6 | `optimization_level=1` — let Classiq's synthesizer optimize |
-
----
-
-### `attempts/registry.py`
-Maps each bit size to its list of working attempts (oldest first). The last entry per bit size is what the test suite runs. **Append-only** — never remove entries.
-
-```python
-LATEST = {
-    4: [
-        {"attempt": "attempt_002B_2026-03-29_1235", "expected_seconds": 15},
-        {"attempt": "attempt_003_2026-03-29_1420", "expected_seconds": 60},
-    ],
-    ...
-}
-```
-
----
-
-### `test_attempts.py`
-pytest-based test suite. Runs the latest registered attempt for each bit size and asserts the recovered `d` matches `consts.PARAMS[bits].d`.
-
-```bash
-pytest test_attempts.py -v          # all bit sizes
-pytest test_attempts.py -v -k bits4 # just 4-bit (~20s)
-pytest test_attempts.py -v -k bits6 # just 6-bit (~120s)
-```
-
-`pytest.ini` sets `--durations=0` automatically so timing is always shown.
-
----
-
-### `research.md`
-Paper list, optimization ideas ranked by NISQ impact, hardware fidelity reference, and notes on what the colleague's prior work already covered.
-
----
-
-### `utils.py`
-Shared utilities:
-- `timed(label)` — context manager that prints elapsed time every 10s and total on exit
-- `play_ending_sound()` — plays a completion sound when a script finishes
-
----
-
-## Setup
-
-```fish
-source /home/dor/Sources/Classiq/claude_repos/venv/bin/activate.fish
-```
-
-See `CLAUDE.md` for full setup instructions.
-
----
-
-## Algorithm
-
-We use **group-index encoding**: instead of storing EC points as `(x, y)` coordinate pairs (requiring quantum modular inversion), points are stored as their scalar index `k` meaning `k·G`. The full oracle reduces to controlled modular additions of precomputed constants — dramatically cheaper.
-
-**Circuit formula:**
-```
-ecp = INITIAL_IDX + Σᵢ x1[i]·2ⁱ + Σᵢ x2[i]·(n−d)·2ⁱ  (mod n)
-```
-
-Two variants:
-- **Ripple-carry** (`modular_add_constant_inplace`) — fewer gates for small n, proven on hardware for 4-bit
-- **QFT-space** (`modular_add_qft_space`) — 57% fewer CX gates for 6-bit+
-
-**Current best results:**
-
-| Bits | Qubits | CX gates | Status |
-|---|---|---|---|
-| 4 | 11 | 716 | ✅ Simulator + hardware (colleague) |
-| 6 | 16 | 1,252 | ✅ Simulator only |
+> If `/resync` is not found, make sure you launched Claude from this folder and restart Claude so it picks up the `.claude/` directory.
