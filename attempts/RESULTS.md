@@ -34,6 +34,8 @@ One row per synthesis run. Add a row each time you run `solve()` and record the 
 | attempt_017_2026-03-31_0010 | 4 | — | — | — | ❌ ClassiqExpansionError: UnboundLocalError — augmented `^=` in `def compute_i` makes `temp` local, shadow fails | `none` |
 | attempt_018_2026-03-31_0020 | 4 | — | — | — | ❌ ClassiqExpansionError: `QNum` object is not subscriptable — `a[i]` requires `a: QArray[QBit]` | `none` |
 | attempt_019_2026-03-31_0030 | 4 | 32 | 167,196 | 146,402 | ✅ (synthesized, d=6 — **execution skipped: 32q > 28q simulator limit**) WORSE — controlled modular_add_inplace as expensive as modular_multiply; fast_mul approach abandoned | `none` |
+| attempt_020_2026-03-31_0400 | 4 | 28 | 105,378 | 105,554 | ✅ synth 526s, ⚠️ execute hung (server timeout) — **NO IMPROVEMENT** — optimization_level=2 identical to level 1 | `none` |
+| attempt_012_2026-03-30_1621 | 6 | — | — | — | ❌ Synthesis TIMEOUT (3663s, limit 3600s) at level 1 — 6-bit circuit too large for default timeout | `none` |
 
 \* Oracle was later found to be circular (`neg_q_step = (n-d) % n` — `d` required in advance).
   Returned the correct `d` but did not constitute a valid solution to ECDLP.

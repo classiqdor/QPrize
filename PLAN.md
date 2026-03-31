@@ -124,15 +124,18 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 
 ### Synthesis time observations
 
-| Attempt | optimization_level | Synthesis time | CX |
-|---------|--------------------|----------------|----|
-| attempt_011 | 1 | 1052s | 136,106 |
-| attempt_012 | 1 | 506s | 105,554 |
-| attempt_013 | 3 | 3614s (TIMEOUT) | N/A |
-| attempt_014 | 1 | TBD | 128,198 |
-| attempt_015 | 1 | TBD | TBD |
+| Attempt | optimization_level | optimization_parameter | Synthesis time | CX |
+|---------|--------------------|------------------------|----------------|----|
+| attempt_011 | 1 | NO_OPT (default) | 1052s | 136,106 |
+| attempt_012 | 1 | NO_OPT (default) | 506s | 105,554 |
+| attempt_013 | 3 | NO_OPT (default) | 3614s (TIMEOUT) | N/A |
+| attempt_014 | 1 | NO_OPT (default) | TBD | 128,198 |
+| attempt_020 | 2 | NO_OPT (default) | 526s | 105,554 (same!) |
+| attempt_021 | 1 | DEPTH | running | TBD |
 
-**Key insight: optimization_level=3 hits the 3600s timeout for this circuit size. Level 1 is the only viable option.**
+**Key insight: optimization_level=2 produces identical CX to level 1 — optimizer already at local optimum. optimization_level=3 hits the 3600s timeout.**
+
+**NEW DISCOVERY (from Cadmium source):** `Constraints(max_width=500)` uses `optimization_parameter=NO_OPTIMIZATION` by default! We've never told the synthesizer to optimize for depth/CX. Setting `optimization_parameter=OptimizationParameter.DEPTH` is a new axis to explore. Also `transpilation_option=TranspilationOption.INTENSIVE` is independent from optimization_level and may help.
 
 **Approach:** Create numbered attempt variants (e.g. `013`, `014`, ...), each applying one idea. Current active:
 
@@ -155,6 +158,7 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 | Idea | Result | Why |
 |------|--------|-----|
 | optimization_level=3 (attempt_013) | TIMEOUT at 3614s | Too slow for this circuit size |
+| optimization_level=2 (attempt_020) | 105,554 CX (identical to level 1) | Already at local optimum; level has no effect |
 | slope_lookup 2D outside within_apply (attempt_014) | 128,198 CX (worse) | 256-entry table synthesis overhead > arithmetic savings, even without bind doubling |
 | mul_lookup 2D in COMPUTE position (attempt_011) | 136,106 CX (worse) | bind in COMPUTE runs twice → 2× overhead |
 | fast_mul schoolbook via 1D lookups + controlled modular_add_inplace (attempt_019) | 146,402 CX (worse, +38%) | controlled modular_add_inplace costs ~1000-1500 CX each vs modular_multiply 2527 total; extra qubits (32 vs 28) add overhead |
@@ -227,6 +231,8 @@ All attempts to replace it — 2D lookup (bind), schoolbook decomposition (contr
 | 014 | 2026-03-30 18:15 | slope_lookup (2D bind, outside within_apply) steps 3+7 | 128,198 | — | ✅ d=6 but WORSE — 256-entry synthesis overhead > savings |
 | 015–018 | 2026-03-30–31 | fast_mul: 4 Python fix attempts (syntax, inplace_xor, def scope, QArray) | — | — | ❌ All failed to reach synthesis (Python/Classiq API issues) |
 | 019 | 2026-03-31 00:30 | fast_mul correct Python: QArray[QBit] + explicit double-XOR | 146,402 | — | ✅ synth but WORSE (32q, execution skipped >28q limit); fast_mul abandoned |
+| 020 | 2026-03-31 04:00 | optimization_level=2 (was 1) — same structure as 012 | 105,554 | — | ✅ NO CHANGE — identical CX to level 1 in 526s |
+| 021 | 2026-03-31 05:00 | optimization_parameter=DEPTH + transpilation_option=INTENSIVE — from Cadmium source discovery | TBD | — | Running |
 
 ### ⚠️ Correctness: attempts 002B–005 are NOT genuine ECDLP
 
