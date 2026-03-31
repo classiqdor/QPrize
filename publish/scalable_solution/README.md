@@ -63,6 +63,63 @@ the path to hardware viability.
 python solution.py 4      # 4-bit (synthesizes in ~9 min, runs on Classiq simulator)
 ```
 
+## Path to full scalability
+
+Two changes would make this solution fully scalable to cryptographic key sizes:
+
+### 1. Replace `modular_inverse_lookup` with Kaliski's algorithm
+
+Current (not scalable — O(p) table):
+```python
+@qperm
+def modular_inverse_lookup(x: Const[QNum], result: QNum) -> None:
+    inv_table = lookup_table(lambda v: pow(int(v), -1, p) ..., x)
+    result ^= subscript(inv_table, x)
+```
+
+Scalable replacement using Classiq's built-in Kaliski modular inverse:
+```python
+@qperm
+def scalable_modular_inverse(x: QNum, result: QNum) -> None:
+    modular_inverse_inplace(p, x)   # Kaliski algorithm — O(p_bits²) gates
+    inplace_xor(x, result)
+    modular_inverse_inplace(p, x)   # uncompute
+```
+
+Cost: O(p_bits²) CX gates vs O(p) table entries. For p=13 (4-bit): negligible difference.
+For p ≈ 2²⁵⁶: the difference between feasible and impossible.
+
+### 2. Replace `sq_lookup` with `modular_square`
+
+Current (not scalable — O(p) table):
+```python
+@qperm
+def sq_lookup(a: Const[QNum], result: QNum) -> None:
+    tbl = lookup_table(lambda av: (int(av) ** 2) % p, a)
+    result ^= subscript(tbl, a)
+```
+
+Scalable replacement — use Classiq's built-in directly:
+```python
+modular_square(p, slope, t0)
+```
+
+This was the baseline in `attempt_example_ec`. It costs ~2,852 CX at p=13 vs 120 CX
+for the lookup — a deliberate tradeoff to reduce gate count on the simulator. At
+cryptographic scale, arithmetic is the only viable option.
+
+### Expected cost at full scalability
+
+For a 256-bit key (p ≈ 2²⁵⁶, p_bits=256):
+- Kaliski inverse: O(p_bits²) ≈ O(65,536) gates per call
+- `modular_multiply`: O(p_bits²) ≈ O(65,536) gates per call
+- Per `ec_point_add`: ~6 multiplies + 2 inverses ≈ O(500k) gates
+- Full circuit (2×var_len=512 additions): O(256M) CX gates
+
+This is consistent with published estimates (Roetteler et al. 2017: ~2,330 logical qubits
+and ~2.09×10⁹ Toffoli gates for 256-bit ECDLP). Hardware capable of running this does
+not yet exist.
+
 ## Algorithm reference
 
 - Roetteler, Naehrig, Svore, Lauter — *Quantum Resource Estimates for Computing
