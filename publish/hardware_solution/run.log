@@ -1,0 +1,24 @@
+$ python publish/hardware_solution/solution.py
+[scalar 4-bit] n=7 | backend=Classiq Simulator
+[Synthesize] starting...
+[Synthesize] done in 14.6s
+  Qubits: 11 | Depth: 1050 | CX: 716
+[Execute] starting...
+[Execute] done in 3.8s
+  Recovered d=6, expected d=6 → ✅
+
+$ python publish/hardware_solution/solution.py --ibm
+⚠️  Running on REAL IBM hardware — this consumes budget!
+[scalar 4-bit] n=7 | backend=IBM ibm_torino
+[Synthesize] starting...
+[Synthesize] done in 13.8s
+  Qubits: 11 | Depth: 1050 | CX: 716
+[Execute] starting...
+[Execute] done in 24.1s
+  Recovered d=6, expected d=6 → ✅
+
+IBM hardware run details:
+  Date:           2026-03-30
+  Backend:        IBM ibm_torino (Heron r1, 133 qubits)
+  Shots:          1,000
+  Classiq Job ID: 8f36bc48-6ee8-4a56-968b-4299dc0f316b

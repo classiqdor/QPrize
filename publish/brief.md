@@ -26,18 +26,11 @@ Reduces to controlled modular additions — O(var_len·log²n) gates.
 **Method B — EC Coordinate Oracle** (scalable, simulator only): Oracle register holds
 `(x, y) ∈ F_p × F_p`. Applies quantum EC point additions using slope formula mod p
 (Roetteler 2017, Algorithm 1). `d` is never used anywhere in the circuit.
+Two non-scalable shortcuts remain: `sq_lookup` (x² mod p, p entries) and
+`modular_inverse_lookup` (x⁻¹ mod p, p entries) — both feasible for p=13, infeasible
+for p ≈ 2²⁵⁶. Replacing them with Kaliski modular inverse and schoolbook arithmetic
+would make the circuit fully scalable.
 4-bit result: **28 qubits, 105,554 CX** — Classiq simulator, recovered d=6 ✅
-
----
-
-## Optimizations
-
-**Profiling** revealed `modular_square` (2,852 CX) dominates Method B cost. Replacing it
-with a 1D lookup table `sq_lookup` (120 CX, 24× cheaper) reduced total CX from 130k → 105k.
-Key finding: 1D lookups (single `Const[QNum]` input) synthesize efficiently; 2D lookups
-require `bind` which doubles overhead in `within_apply` due to uncomputation.
-**20+ optimization attempts** explored: projective coordinates, schoolbook multipliers,
-windowed oracles, semiclassical QFT, truncated registers. Full log in `RESULTS.md`.
 
 ---
 
@@ -62,16 +55,8 @@ All invertible `(x1_r, x2_r)` pairs consistently recover `d=6` — no engineered
   ...   ...   6     ...   (all invertible pairs give d=6)
 ```
 
----
-
-## Limitations
-
-**Method A:** Oracle constants require enumerating all `n` group elements classically
-(O(n) work). Infeasible for n ≈ 2²⁵⁶ — competition-scale demonstration only.
-
-**Method B:** `sq_lookup` and `modular_inverse_lookup` each have `p` entries — feasible
-for p=13, not for p ≈ 2²⁵⁶. Replacing them with Kaliski modular inverse and QROM
-arithmetic would make the circuit fully scalable.
+**Method A limitation:** Oracle constants require enumerating all `n` group elements
+classically (O(n) work). Infeasible for n ≈ 2²⁵⁶ — competition-scale demonstration only.
 
 ---
 
