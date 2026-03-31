@@ -126,27 +126,51 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 
 | Attempt | optimization_level | Synthesis time | CX |
 |---------|--------------------|----------------|----|
-| attempt_012 | 1 | 506s | 105,554 |
 | attempt_011 | 1 | 1052s | 136,106 |
-| attempt_013 | 3 | TBD | TBD |
+| attempt_012 | 1 | 506s | 105,554 |
+| attempt_013 | 3 | 3614s (TIMEOUT) | N/A |
+| attempt_014 | 1 | TBD | 128,198 |
+| attempt_015 | 1 | TBD | TBD |
+
+**Key insight: optimization_level=3 hits the 3600s timeout for this circuit size. Level 1 is the only viable option.**
 
 **Approach:** Create numbered attempt variants (e.g. `013`, `014`, ...), each applying one idea. Current active:
 
 | Attempt | Idea | Status |
 |---------|------|--------|
-| 013 | optimization_level=3, same code as 012 | Running |
-| 014 | slope_lookup (2D, outside within_apply) to replace steps 3+7 | Running |
+| 015 | fast_mul (schoolbook: bit decomp + 1D Const lookups + controlled modular_add_inplace) | Running |
 
 ### Ideas still to try (roughly in priority order)
 
 | Idea | Expected impact | Notes |
 |------|----------------|-------|
-| slope_lookup outside within_apply (attempt_014) | ~85k CX? (-20k) | Replace steps 3+7 with 2D lookup; bind runs once not twice |
-| optimization_level=3 (attempt_013) | 5–15% | Free win if synthesizer finds more cancellations |
+| fast_mul schoolbook (attempt_015) | ~62k CX? (-43k) | All 1D Const lookups, no bind, p_bits iterations per mul |
 | Replace step 4 (modular_multiply in compute) | ~20k (-5054 CX/addition) | No good 2D alternative known; bind doubles overhead |
 | Full EC point lookup (attempt_010 approach) | Large if synthesis works | 256-entry table for whole addition; attempt_010 timed out at 3600s |
 | Projective/Jacobian coordinates | Unclear at small scale | inv_lookup already cheap (118 CX); more muls may hurt |
 | Kaliski modular inverse | Removes lookup table, scalable | Adds gate overhead vs lookup table |
+
+### ❌ Confirmed dead ends
+
+| Idea | Result | Why |
+|------|--------|-----|
+| optimization_level=3 (attempt_013) | TIMEOUT at 3614s | Too slow for this circuit size |
+| slope_lookup 2D outside within_apply (attempt_014) | 128,198 CX (worse) | 256-entry table synthesis overhead > arithmetic savings, even without bind doubling |
+| mul_lookup 2D in COMPUTE position (attempt_011) | 136,106 CX (worse) | bind in COMPUTE runs twice → 2× overhead |
+| fast_mul schoolbook via 1D lookups + controlled modular_add_inplace (attempt_019) | 146,402 CX (worse, +38%) | controlled modular_add_inplace costs ~1000-1500 CX each vs modular_multiply 2527 total; extra qubits (32 vs 28) add overhead |
+
+### Key conclusion: Classiq's built-in modular_multiply (2527 CX) is the best available multiplier
+
+All attempts to replace it — 2D lookup (bind), schoolbook decomposition (controlled adds), mul_lookup — have been worse. The only successful optimization is sq_lookup for step 5 (the one step where the function depends on a SINGLE quantum register, making it a 1D Const[QNum] lookup).
+
+**The 1D vs 2D rule:**
+- 1D Const[QNum] lookup (one quantum arg, not modified): efficient (120 CX for 13 entries)
+- Any 2D operation (two quantum registers, or one with `^=` in compute): worse than arithmetic
+
+**Next directions to explore:**
+- Reduce number of within_apply COMPUTE multiplications (steps 4 and 7 run modular_multiply twice)
+- Try 6-bit genuine ECDLP to see scaling behavior
+- Research alternative EC addition formulas (e.g., Montgomery coordinates) with fewer multiplications
 
 **Milestone:** Once a variant reaches ≤ 1,000 CX for 4-bit, test on simulator; if fidelity is adequate, run on hardware.
 
@@ -199,8 +223,10 @@ Both previous approaches encoded `neg_q_step = (n-d) % n` — knowing d before s
 | 010 | 2026-03-30 11:38 | Full EC point addition via packed 256-entry lookup table (Bennett trick), flat QNum oracle register | — | — | ❌ Synthesis timed out (3600s) |
 | 011 | 2026-03-30 12:10 | mul_lookup (2D bind) + sq_lookup + inv_lookup — flat ex, ey | 136,106 | — | ✅ d=6 but WORSE than baseline (bind in COMPUTE doubles overhead) |
 | 012 | 2026-03-30 16:21 | sq_lookup only (replaces modular_square) — all else unchanged | 105,554 | — | ✅ d=6 (**best so far, 19% improvement**) |
-| 013 | 2026-03-30 18:15 | optimization_level=3 on attempt_012 | TBD | — | Running |
-| 014 | 2026-03-30 18:15 | slope_lookup (2D, outside within_apply) to replace steps 3+7 | TBD | — | Running |
+| 013 | 2026-03-30 18:15 | optimization_level=3 on attempt_012 | N/A | — | ❌ Synthesis timeout (3614s, level=3 too slow) |
+| 014 | 2026-03-30 18:15 | slope_lookup (2D bind, outside within_apply) steps 3+7 | 128,198 | — | ✅ d=6 but WORSE — 256-entry synthesis overhead > savings |
+| 015–018 | 2026-03-30–31 | fast_mul: 4 Python fix attempts (syntax, inplace_xor, def scope, QArray) | — | — | ❌ All failed to reach synthesis (Python/Classiq API issues) |
+| 019 | 2026-03-31 00:30 | fast_mul correct Python: QArray[QBit] + explicit double-XOR | 146,402 | — | ✅ synth but WORSE (32q, execution skipped >28q limit); fast_mul abandoned |
 
 ### ⚠️ Correctness: attempts 002B–005 are NOT genuine ECDLP
 
