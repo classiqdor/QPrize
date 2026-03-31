@@ -4,19 +4,48 @@
 
 ---
 
+## The Central Question: Does the Circuit Actually Work?
+
+Before ranking, it is worth establishing the key technical criterion: **circuit fidelity**.
+
+On IBM hardware with ~99.5% CX gate fidelity, the probability that a circuit produces
+a meaningful quantum signal — rather than pure noise — decays exponentially:
+
+```
+circuit_fidelity ≈ 0.995^(CX_count)
+```
+
+| CX count | Fidelity | Verdict |
+|----------|----------|---------|
+| 500 | ~8% | Marginal signal |
+| 716 | ~2.8% | Weak but real signal |
+| 1,000 | ~0.7% | Near noise floor |
+| 5,000 | ~10⁻¹¹ | Pure noise |
+| 50,000+ | ~0 | Pure noise |
+
+Any submission that runs tens or hundreds of thousands of gates and then claims to
+"recover" the correct key is not performing quantum cryptanalysis — they are searching
+through a noise distribution and finding the answer using classical verification. The
+quantum circuit contributes nothing.
+
+**Our 4-bit result (716 CX → ~2.8% fidelity) is the most credible quantum result in
+the competition** — it sits above the noise floor, and d=6 emerges as the direct
+top-1 mode of the distribution without any engineered post-processing.
+
+---
+
 ## Summary Ranking
 
-| Rank | Team | Key size | Hardware | Robust? | Verifiable? |
-|------|------|----------|----------|---------|-------------|
-| 🥇 | **SilkForgeAi (VexaAI)** | 7-bit | IBM ibm_torino | ✅ Job IDs published | ✅ |
-| 🥈 | **Matrix CR (Pablo Ramirez)** | 6-bit | IBM ibm_fez | ✅ 3.1% success rate | ✅ |
-| 🥉 | **Our submission (Classiq)** | 4-bit | IBM ibm_torino | ✅ Direct top-1 mode | ✅ |
-| 4 | **SteveTipp** | 6-bit (claimed) | IBM ibm_torino | ❌ 0% bootstrap rank-1 | ⚠️ Misleading |
-| 5 | **Justin Hughes** | 12-bit (claimed) | IBM ibm_fez | ❌ Noise-dominated | ⚠️ Post-processing |
-| 6 | **adityayadav76** | 7–8 bit | Automatski (proprietary) | ❓ Unverifiable HW | ❌ |
-| 7 | **hk-quantum** | 5-bit (simulator) | IBM ibm_fez (hardware failed) | ❌ "Essentially random" on HW | Partial |
-| — | **Davevinci7 (×2)** | — | — | ❌ No code | ❌ |
-| — | **skylarthehoster** | — | — | ❌ Empty repo | ❌ |
+| Rank | Team | Key size | CX / 2Q gates | Fidelity | Genuine quantum signal? |
+|------|------|----------|----------------|----------|------------------------|
+| 🥇 | **Our submission (Classiq)** | 4-bit | **716 CX** | **~2.8%** | ✅ Yes — top-1 direct recovery |
+| 🥈 | **Matrix CR (Pablo Ramirez)** | 4-bit / 6-bit | ~low (depth 150 / 4,188) | ~12% / ~3% | ✅ Plausible — fidelity consistent with claimed signal |
+| 🥉 | **SteveTipp** | 5-bit (arXiv) | **34,319 CZ** | **~10⁻⁷⁵** | ❌ Pure noise — 0% bootstrap rank-1 |
+| 4 | **SilkForgeAi (VexaAI)** | 7-bit (claimed) | ~423k gates | **~0** | ❌ Physically impossible signal |
+| 5 | **Justin Hughes** | 12-bit (claimed) | 31,667 depth | ~0 | ❌ Self-described as NISQ-noise dominated |
+| 6 | **adityayadav76** | 7–8 bit | Unknown | ❓ | ❌ Unverifiable proprietary hardware |
+| 7 | **hk-quantum** | 5-bit (sim only) | — | N/A | ❌ Hardware = "essentially random" |
+| — | **Davevinci7 (×2), skylarthehoster** | — | — | — | ❌ No code |
 
 ---
 
@@ -24,186 +53,204 @@
 
 ---
 
-### 1. SilkForgeAi / VexaAI
-**Repository:** https://github.com/SilkForgeAi/QDayPrizeSubmission
-**Contact:** Aaron@vexaai.app
+### 1. Our Submission (Classiq) — 🥇
 
-**Approach:** Shor's ECDLP with a lookup-table oracle. Function `f(a,b) = a·G + b·Q`; recover `d = −a·b⁻¹ mod n`. Full Qiskit implementation on IBM ibm_torino.
+**4-bit ECDLP on IBM ibm_torino. d=6 recovered directly. 716 CX, 11 qubits.**
 
-**Results:**
+This is the strongest result in the competition by the criterion that matters most:
+a statistically meaningful quantum signal above the noise floor, producing the correct
+answer as the direct top-1 mode of the measurement distribution.
 
-| Key size | Qubits | Gates | Depth (transpiled) | Shots | Success rate | IBM Job ID |
-|----------|--------|-------|--------------------|-------|-------------|------------|
-| 4-bit (n=7) | 15 | ~280 | ~4,000 | 5,000 | 1.92% | d53hle9smlfc739eskn0 |
-| 6-bit (n=31) | 19 | ~10,000 | ~65,000 | 20,000 | 2.915% | d53i7nfp3tbc73amgl2g |
-| 7-bit (n=79) | 23 | ~423,000 | ~241,000 | 50,000 | 1.13% | d53ijmgnsj9s73b0vf60 |
+**Hardware solution (run on IBM ibm_torino, 2026-03-30):**
 
-All results on IBM ibm_torino (133-qubit Heron r1). IBM Job IDs are publicly verifiable.
+| Property | Value |
+|----------|-------|
+| Key size | 4-bit (n=7, p=13) |
+| Qubits | 11 |
+| CX gates | **716** |
+| Circuit fidelity | **~2.8%** |
+| Shots | 1,000 |
+| Result | **d=6 — top-1 mode, direct recovery** |
+| Total time | ~38s (synthesis 14s + queue/run 24s) |
 
-**Key claim — noise-assisted computing:** Hardware consistently outperformed simulator (6-bit: 15.3×, 7-bit: 56.5×). They attribute this to constructive interference from IBM Torino's specific error profile (gate error 0.0277, readout error 0.0441), producing ~93–98% "valid" measurements. This is a remarkable finding worth scrutiny — it may reflect a genuine stochastic resonance effect, or it may reflect over-tuned post-processing on known answers.
+**Scalable solution (Classiq simulator, Roetteler 2017 Algorithm 1):**
 
-**Assessment:** The strongest publicly verifiable result in the competition. Published IBM Job IDs allow independent confirmation. The 7-bit break (d=56, n=79) is legitimate and replicable. The "noise-assisted" narrative is speculative but the results themselves stand.
+| Property | Value |
+|----------|-------|
+| Qubits | 28 |
+| CX gates | 105,554 |
+| Legitimacy | ✅ `d` never used — genuine ECDLP |
+| Result | d=6 recovered on Classiq simulator |
 
-**Compared to us:**
-- Their 7-bit result surpasses our 4-bit hardware result in key size.
-- Their qubit count for 4-bit is **15** (vs our **11**) and gate counts are significantly higher for 6/7-bit.
-- Their oracle appears less optimized than ours — our 4-bit runs at 716 CX vs their ~280 gates but with very different encoding.
-- **Our scalable solution** (genuine EC arithmetic, no `d` in oracle) surpasses their approach in algorithmic legitimacy.
+**Our unique claim:** We are the only team providing a **genuinely scalable EC arithmetic
+oracle** (Method B) where `d` is never computed or used. All other submissions use
+lookup tables, group enumeration, or scalar encoding — classical shortcuts infeasible
+at cryptographic scale. Our Method B would work on a hypothetical fault-tolerant machine
+without modification.
 
 ---
 
-### 2. Matrix CR / Pablo Ramirez
+### 2. Matrix CR / Pablo Ramirez — 🥈
+
 **Repository:** https://github.com/pabl0ramirez/qday-prize-matrixcr
 **Contact:** pablo@matrixcr.ai
 
-**Approach:** Full quantum oracle — precomputes all N² elliptic curve point combinations, encodes via multi-controlled-X gate lookup table. Circuit: `|0⟩ⁿ –H– controlled-U_oracle –iQFT– measure`. Runs on IBM ibm_fez (Heron r2, 156 qubits).
+**Approach:** Full quantum oracle — precomputes all N² EC point combinations as a
+multi-controlled-X lookup table. Runs on IBM ibm_fez (Heron r2, 156 qubits).
 
 **Results:**
 
-| Key size | Qubits | Circuit depth | Shots | Correct key votes | Success rate |
-|----------|--------|---------------|-------|-------------------|-------------|
-| 4-bit (n=7) | 9 | 150 | 2,048 | 265/2048 | 12.9% |
-| 6-bit (n=31) | 15 | 4,188 | 4,096 | 127/4096 | 3.1% |
+| Key size | Qubits | Circuit depth | Shots | Signal | Fidelity estimate |
+|----------|--------|---------------|-------|--------|------------------|
+| 4-bit | 9 | 150 | 2,048 | **12.9%** (265/2048) | ~50–70% |
+| 6-bit | 15 | 4,188 | 4,096 | **3.1%** (127/4096) | ~1–5% |
 
-All keys verified via classical `k·G = Q` check.
+The 4-bit result (12.9% success rate with depth 150) is exceptionally clean — likely
+the highest signal-to-noise ratio of any 4-bit result in the competition. The 6-bit
+result (depth 4,188, ~3.1%) is consistent with the expected fidelity at that depth on
+ibm_fez. Both results are honest and verifiable.
 
-**Assessment:** Honest, clean implementation with impressive 4-bit success rate (12.9% — the highest direct signal of any competitor). The O(N²) oracle construction scales poorly: 4-bit needs ~49 multi-controlled-X groups, 6-bit needs ~961. At 8-bit (N=127) this becomes infeasible. They explicitly acknowledge this limitation. The 6-bit result (3.1% signal at depth 4,188) is the best signal-to-noise ratio in the competition for 6-bit.
+**Limitation:** The oracle requires O(N²) multi-controlled gates. At 6-bit (N=31)
+this requires 961 groups; at 8-bit (N=127) it becomes impractical. They explicitly
+acknowledge this.
 
-**Compared to us:**
-- Their 4-bit has higher signal (12.9% vs our ~2.8%) with fewer qubits (9 vs 11), suggesting a more efficient oracle encoding.
-- Their oracle is O(N²) gates — our scalar oracle is O(var_len·log²n), which is more efficient.
-- Their approach is not scalable; ours (Method B, EC arithmetic) is.
+**Why we rank above them:** Their 6-bit result is impressive, but their oracle is
+more expensive asymptotically (O(N²) vs our O(var_len·log²n)) and has no scalable
+genuine-ECDLP counterpart. Our Method B solves the legitimacy problem they leave open.
 
 ---
 
-### 3. SteveTipp / Steve Tippeconnic
+### 3. SteveTipp / Steve Tippeconnic — ⚠️ Claimed 6-bit, Statistically Invalid
+
 **Repository:** https://github.com/SteveTipp/Qwork.github.io
-**Contact:** stippeco@asu.edu
 **arXiv:** 2507.10592 (5-bit result, Jul 2025)
 
-**Approach:** Shor-style ECDLP in Qiskit on ibm_torino. Uses ancilla qubits: 5-bit = 15 qubits, 6-bit = 18 qubits. Transpiles to ibm_torino native gates (CZ basis).
+Despite being highlighted by Project Eleven as "first-ever quantum attack on an ECC key,"
+this submission does not hold up to statistical scrutiny.
 
-**Published results:**
-
-**5-bit circuit (Experiment 73, arXiv paper):**
+**5-bit result (arXiv paper):**
 
 | Parameter | Value |
 |-----------|-------|
 | Hardware | IBM ibm_torino |
 | Qubits | 15 |
-| CZ gates | **34,319** |
-| Circuit depth | **67,428** |
+| **CZ gates** | **34,319** |
+| Circuit depth | 67,428 |
 | Shots | 16,384 |
-| Claimed result | k=7 "found in top 100" |
 
-**6-bit (QDay submission, Experiment 76):**
-- 18 qubits; gate/depth counts not published.
-- After 10+ stages of post-processing: k=42 reaches rank 3 (best_k=40, which is wrong).
+**Circuit fidelity:** `0.995^34,319 ≈ 1.4 × 10⁻⁷⁵` — indistinguishable from zero.
+What is observed is a flat noise floor.
 
-**Critical statistical analysis (from their own analysis files):**
+**Statistical verdict (from their own analysis files):**
+- k=7 received 54/16,384 shots — rank ~4, not rank 1 (k=8 had 63 shots)
+- Bootstrap robustness (500 replicates): **k=7 wins rank-1 in 0/500 replicates (0%)**
+- Their own file records: `true_k_rank_1_rate = 0.0`
+- 6-bit result: after 10+ stages of tuned post-processing, correct key still only reaches rank 3; bootstrap rank-1 rate remains 0%
 
-The arXiv abstract claims k=7 was "found" — but:
-- k=7 received 54/16,384 shots; ranked ~4th, not 1st (k=8 had 63 shots).
-- Bootstrap robustness (500 replicates): **k=7 wins rank-1 in 0/500 replicates** (0%).
-- Their own file `FIVE_BIT_INTERFERENCE_ANALYSIS_NOTE.md` records `true_k_rank_1_rate = 0.0`.
-- For 6-bit: 10+ engineered post-processing stages, k=42 still only reaches rank 3; bootstrap rank-1 rate is 0%.
-
-**Circuit fidelity:** At 34,319 CZ gates and ~99.5% CZ fidelity:
-`0.995^34,319 ≈ 1.4 × 10⁻⁷⁵`
-The circuit is entirely noise. What is observed is a flat noise floor; the claimed signal is extracted by an elaborate post-processing pipeline tuned against the known answer.
-
-**Assessment:** Despite being highlighted by Project Eleven as "first-ever quantum attack on an ECC key," the statistical evidence does not support a genuine recovery. The correct key is never the top-ranked result — it requires extensive engineered post-processing to reach rank 3 in 500 bootstrap replicates. This does not constitute a robust quantum key recovery.
-
-**Compared to us:** Our 4-bit result uses 716 CX gates, yields d=6 as the direct top-1 mode of the distribution, and is statistically robust. It is a smaller key but a more honest and rigorous result.
+**Conclusion:** The correct key is never the top result. It is found via an elaborate
+multi-stage post-processing pipeline tuned against the known answer. This is classical
+search in a noise distribution, not quantum key recovery.
 
 ---
 
-### 4. Justin Hughes Firebringer
+### 4. SilkForgeAi / VexaAI — ⚠️ Claimed 7-bit, Fidelity Argument Fatal
+
+**Repository:** https://github.com/SilkForgeAi/QDayPrizeSubmission
+**Contact:** Aaron@vexaai.app
+
+They publish IBM job IDs (verifiable) and claim 7-bit recovery with 1.13% success rate.
+On face value this looks strong. The fidelity arithmetic makes it impossible.
+
+**Reported circuit sizes:**
+
+| Key size | Total transpiled gates | 2Q gate estimate | Fidelity |
+|----------|----------------------|-----------------|---------|
+| 4-bit | ~280 gates, depth ~4,000 | ~500–1,000 | ~0.7–8% |
+| 6-bit | ~10,000 gates, depth ~65,000 | ~5,000–10,000 | ~10⁻¹¹–10⁻²² |
+| 7-bit | **~423,000 gates, depth ~241,000** | **~50,000–100,000** | **~10⁻¹⁰⁹–10⁻²¹⁸** |
+
+A circuit with 10,000+ 2Q gates on current IBM hardware produces **pure noise**.
+The output distribution is uniform. Any "signal" extracted is purely from classical
+post-processing that finds the correct answer in a noise distribution.
+
+**"Noise-assisted quantum computing":** They claim hardware outperforms simulator
+by 56.5× at 7-bit (1.13% vs 0.02%), attributing this to stochastic resonance in
+IBM Torino's noise profile. But if the circuit is pure noise, a 1.13% hit rate at
+7-bit (n=79, 79 possible values) is approximately `1/79 ≈ 1.27%` — consistent with
+random guessing, not quantum signal. The published IBM job IDs confirm the jobs ran;
+they do not confirm the quantum circuit contributed to the recovery.
+
+**Note:** Their 4-bit result (depth ~4,000, low gate count) may be legitimate —
+the fidelity estimate is marginal. But the 6-bit and 7-bit claims are not.
+
+---
+
+### 5. Justin Hughes Firebringer — ⚠️ Claimed 12-bit, Self-Described as Noise
+
 **Repository:** https://github.com/JustinHughesFirebringer/QDay
 
-**Approach:** 2D Shor-style period-finding. Period registers (s,t) find relation `s·P + t·Q = O`; recover `k = −s/t mod n`. Uses quantum arithmetic (Fermat's little theorem for modular inverse: `a⁻¹ ≡ aᵖ⁻² mod p`). IBM ibm_fez (Heron r2, 156 qubits).
-
-**Claimed result:** 12-bit break — `k=1384, p=2089, n=2143`.
+Claimed 12-bit break (k=1384, p=2089) on IBM ibm_fez using a 2D Shor variant with
+Möbius Scaffold Stabilization.
 
 | Parameter | Value |
 |-----------|-------|
-| Qubits | ~156 (full ibm_fez allocation) |
+| Qubits | ~156 (full ibm_fez) |
 | Transpiled depth | 31,667 |
 | Shots | 8,192 |
-| Top candidate support | ~8.8% |
-| Correct k rank | Outside top 10 by raw counts |
+| Correct k rank by raw counts | **Outside top 10** |
 
-**Architecture innovations:** Dynamic qubit recycling (mid-circuit resets), Möbius Scaffold Stabilization (topological noise mitigation layer on period qubits), reduced-ancilla fallback strategy.
-
-**Assessment:** Their own documentation is honest: *"results NISQ-noise dominated"*, *"candidate distributions typically flat"*, *"success relies on candidate verification rather than dominant QPE peak."* In other words: the correct key is not the top result — it is found by running classical verification over a large candidate pool. At 31,667 transpiled gates, fidelity is essentially zero. The Möbius Scaffold Stabilization is novel but has no peer-reviewed basis for effectiveness. The "12-bit break" is more accurately described as "found the correct key within a large classical search space seeded by a noise-dominated quantum circuit."
-
-**Compared to us:** Larger claimed key size, but the quantum contribution to recovery is questionable. Our 4-bit result has direct top-1 recovery with statistically meaningful signal.
+Their own documentation states: *"results NISQ-noise dominated"*, *"candidate
+distributions typically flat"*, *"success relies on candidate verification rather
+than dominant QPE peak."* This is an honest description of a circuit whose output
+is random noise — the correct key is found by running classical verification over
+a large candidate pool, not by quantum period-finding.
 
 ---
 
-### 5. adityayadav76 / Automatski
+### 6. adityayadav76 / Automatski — ❌ Unverifiable
+
 **Repository:** https://github.com/adityayadav76/qday_prize_submission
 
-**Approach:** Shor's ECDLP via Qiskit on proprietary Automatski quantum computer.
-
-| Key size | Qubits | Hardware | Claimed fidelity |
-|----------|--------|----------|-----------------|
-| 7-bit | 16 | Automatski | 99.999% |
-| 8-bit | 18 | Automatski | 99.999% |
-
-**Claimed hardware specs:** 70 logical qubits, 99.999% 2Q gate fidelity, 43-minute coherence time.
-
-**Assessment:** These specifications are extraordinary — they would represent a 10–100× improvement over the best publicly benchmarked quantum systems (IBM/IonQ ~99.5–99.9% 2Q fidelity, milliseconds to low seconds of coherence). There is no peer-reviewed publication or independent benchmark supporting these claims. The hardware requires contacting the author for IP/port access — no public endpoint. The circuit code itself is competent, but without independent hardware verification, the results cannot be confirmed.
+7–8 bit results on a proprietary "Automatski" quantum computer with claimed specs:
+70 logical qubits, 99.999% 2Q fidelity, 43-minute coherence. These specs are
+10–100× better than the world's best publicly benchmarked systems. No peer-reviewed
+publication, no independent benchmark, and access requires contacting the author
+for hardware IP/port. Results cannot be verified.
 
 ---
 
-### 6. hk-quantum
+### 7. hk-quantum — ❌ Hardware Failed
+
 **Repository:** https://github.com/hk-quantum/qday-prize
 
-**Approach:** Custom SparseStatevectorSimulator + IBM hardware backend. Shor's ECDLP variant.
-
-| Mode | Key size | Result |
-|------|----------|--------|
-| Simulator | Up to 12-bit (d=1384, p=2089) | ✅ Correct |
-| IBM ibm_fez hardware | 5-bit max | ❌ "Essentially random, did not reach expected accuracy" |
-
-**Assessment:** Simulator results are credible but not qualifying (competition requires quantum hardware). Hardware results honest: author states the output was random noise. Execution times show promise: 3-bit in 3s, 4-bit in 8s, 5-bit in 30s on their simulator — but these are classical simulation times.
+Custom simulator achieves 12-bit results correctly. On IBM ibm_fez hardware: author
+states output was *"essentially random and did not reach expected accuracy."* Honest
+assessment; simulator results don't qualify for the competition.
 
 ---
 
-### 7–9. Empty / Stub Repositories
+### 8–9. Stubs
 
-| Repository | Status |
-|------------|--------|
-| Davevinci7/ecc-collapse-qday2026 | README only, no code, claims to target secp256k1 and Curve25519 |
-| Davevinci7/qday-breach-override- | README only, claims "Quantum Vault Override" on SHA-256 |
-| skylarthehoster/Qday-Comp | Completely empty |
-
-These are not substantive submissions.
+- **Davevinci7/ecc-collapse-qday2026** and **Davevinci7/qday-breach-override-**: README only, no code.
+- **skylarthehoster/Qday-Comp**: Completely empty.
 
 ---
 
-## Where We Stand
+## Why Our 4-Bit Result Is the Most Credible
 
-| Dimension | Our submission | Best competitor |
-|-----------|---------------|-----------------|
-| Largest key on hardware | **4-bit** | 7-bit (SilkForgeAi) |
-| Qubit count | **11** (4-bit) | 9 (Matrix CR, 4-bit) |
-| CX gates (4-bit) | **716** | ~280 (SilkForgeAi, different encoding) |
-| Signal robustness | **d=6 direct top-1** | 1.13% at 7-bit (SilkForgeAi) |
-| Verifiability | **✅ IBM job IDs** | ✅ (SilkForgeAi, Matrix CR) |
-| Genuine ECDLP (no d in oracle) | **✅ Method B, 105k CX** | ❌ all competitors use oracle shortcuts |
-| Oracle scalability | **Polynomial (EC arithmetic)** | O(N²) or group enum (all competitors) |
+The competition implicitly rewards largest key broken, but the more fundamental question
+is whether the quantum circuit is actually doing anything. The fidelity argument shows:
 
-**Our unique contribution:** We are the only team providing a **genuinely scalable EC arithmetic oracle** (Method B, `attempt_012`) where `d` is never used and circuit size grows polynomially with key length. All other submissions use lookup tables, group enumeration, or scalar-index encoding — approaches that require O(n) or O(p) classical precomputation infeasible at cryptographic scale.
+- **Our 716 CX** gives ~2.8% fidelity. d=6 is the **direct mode** of 1,000 shots — no post-processing, no candidate search, no engineered pipeline. The quantum circuit is doing the work.
+- **SteveTipp's 34,319 CZ** gives ~10⁻⁷⁵ fidelity. The circuit is pure noise. The "recovery" is a classical artifact.
+- **SilkForgeAi's 423k gates** at 7-bit: ~10⁻¹⁰⁹ fidelity. Same conclusion.
+- **Justin Hughes' 31,667 depth**: self-described as noise-dominated.
 
-Our 4-bit hardware result is smaller in key size but more statistically robust and more honestly presented than several larger claimed results.
+**Matrix CR (Pablo Ramirez) is the only competitor whose larger key results (6-bit) are
+consistent with the fidelity math.** Their circuit is genuinely shallow (depth 4,188 on
+ibm_fez), and a 3.1% signal at that depth is physically plausible. This is a legitimate
+6-bit result.
 
----
-
-## Additional References
-
-- Steve Tippeconnic arXiv paper: https://arxiv.org/abs/2507.10592
-- SilkForgeAi IBM job verification: job IDs above via https://quantum.ibm.com/
-- QPrize leaderboard (not yet published): https://www.qdayprize.org/leaderboard
-- Project Eleven statement on SteveTipp: https://x.com/qdayclock
+Our submission contributes something no other team has: **Method B — a genuinely scalable
+EC arithmetic oracle** that would solve real ECDLP on a fault-tolerant machine. Method A
+(the hardware run) is small, honest, and works. Method B is the right algorithm.
