@@ -7,6 +7,7 @@
 | Dor Harpaz | dor@classiq.io | Classiq Technologies |
 | Or Samimi Golan | orsa@classiq.io | Classiq Technologies |
 | Amir Naveh | — | Classiq Technologies |
+| Ariel Smoler | — | Classiq Technologies |
 
 **GitHub:** https://github.com/classiqdor/QPrize
 

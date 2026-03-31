@@ -112,22 +112,3 @@ We implement Shor's ECDLP algorithm using two-register quantum phase estimation:
 
 Full technical details in [`publish/brief.md`](publish/brief.md) and [`publish/summary/summary.md`](publish/summary/summary.md).
 
----
-
-## For Claude (start here for development sessions)
-
-Run `/resync` at the start of every session, and periodically while working (every ~30 min)
-since multiple Claude instances and humans may be pushing in parallel.
-
-```
-/resync
-```
-
-`/resync` does `git pull --rebase` then reads:
-- **GUIDELINE.md** — naming conventions, what `solve()` must do, results format, Classiq SDK patterns, git workflow
-- **PLAN.md** — strategy, oracle method comparison, current CX counts, priority-ordered optimization roadmap, full attempt history
-- **attempts/registry.py** — append-only list of verified working attempts
-- **attempts/RESULTS.md** — one row per synthesis run (qubits, depth, CX, success, legitimacy)
-- **worklog/** (latest) — what the previous session did, what failed, open questions
-
-> If `/resync` is not found, make sure you launched Claude from this folder and restart Claude so it picks up the `.claude/` directory.
