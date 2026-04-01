@@ -126,3 +126,4 @@ not yet exist.
   Elliptic Curve Discrete Logarithms* (2017) — https://eprint.iacr.org/2017/598.pdf
 - Haner, Jaques, Naehrig, Roetteler, Soeken — *Improved Quantum Circuits for Elliptic
   Curve Discrete Logarithms* (2020) — https://eprint.iacr.org/2020/077.pdf
+- Classiq Library — *Elliptic Curve Discrete Log* notebook — https://github.com/Classiq/classiq-library/blob/main/algorithms/number_theory_and_cryptography/elliptic_curves/elliptic_curve_discrete_log.ipynb

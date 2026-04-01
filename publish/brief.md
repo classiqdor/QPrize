@@ -65,3 +65,4 @@ classically (O(n) work). Infeasible for n ≈ 2²⁵⁶ — competition-scale de
 1. Roetteler, Naehrig, Svore, Lauter — *Quantum Resource Estimates for ECDLP* (2017)
 2. Haner, Jaques, Naehrig, Roetteler, Soeken — *Improved Quantum Circuits for ECDLP* (2020)
 3. Classiq SDK — https://docs.classiq.io
+4. Classiq Library — *Elliptic Curve Discrete Log* notebook — https://github.com/Classiq/classiq-library/blob/main/algorithms/number_theory_and_cryptography/elliptic_curves/elliptic_curve_discrete_log.ipynb
