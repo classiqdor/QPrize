@@ -1,7 +1,8 @@
-# Hardware Solution — Scalar Oracle on IBM Quantum Hardware
+# Hardware Solution — Scalar Oracle on Quantum Hardware
 
-This solution runs Shor's ECDLP algorithm on **real IBM quantum hardware** (ibm_torino).
-It successfully recovers the 4-bit private key `d=6` in ~38 seconds total.
+This solution runs Shor's ECDLP algorithm on **real quantum hardware**.
+It successfully recovers the 4-bit private key `d=6` and has been verified
+on **four different quantum devices** across three hardware vendors.
 
 ## What it does
 
@@ -24,9 +25,17 @@ not for cryptographic-scale keys. See the scalable solution for a genuinely scal
 | CX gates | 716 |
 | Circuit depth | 1,050 |
 | Hardware fidelity | ~2.8% (0.995^716) |
-| Hardware | IBM ibm_torino (133-qubit Heron r1) |
-| Execution time | ~38s (synthesis 14s + queue+run 24s) |
-| Result | ✅ d=6 recovered correctly |
+
+## Hardware results
+
+The same circuit was executed on four devices across three vendors:
+
+| Device | Type | Shots | Result | Job ID |
+|--------|------|-------|--------|--------|
+| IBM ibm_torino (Heron r1) | Superconducting | 1,000 | ✅ d=6 | `8f36bc48` |
+| IonQ Forte-1 | Trapped-ion | 1,024 | ✅ d=6 | `f6da2c51` |
+| IBM ibm_pittsburgh | Superconducting | 1,024 | ✅ d=6 | `56c3b591` |
+| Rigetti Ankaa-3 | Superconducting | 4,096 | ✅ d=6 | `b9c03bef` |
 
 ## Setup
 
@@ -50,7 +59,6 @@ not for cryptographic-scale keys. See the scalable solution for a genuinely scal
 
 **Simulator (default — safe, free, instant):**
 ```bash
-source venv/bin/activate
 python solution.py
 ```
 
@@ -60,25 +68,12 @@ set -a; source .env; set +a
 python solution.py --ibm
 ```
 
-## Verifiable job
-
-The hardware run is publicly verifiable via the Classiq job ID:
-
-```
-Classiq Job ID: 8f36bc48-6ee8-4a56-968b-4299dc0f316b
-Backend:        IBM ibm_torino
-Date:           2026-03-30
-Shots:          1,000
-```
-
 ## Expected output
 
 ```
-⚠️  Running on REAL IBM hardware — this consumes budget!
-[scalar 4-bit] n=7 | backend=IBM ibm_torino
-[Synthesize] done in 13.8s
-  Qubits: 11 | Depth: 1050 | CX: 716
-[Execute] done in 24.1s
+[scalar 4-bit] n=7 | backend=Classiq Simulator
+Quantum program link: https://platform.classiq.io/circuit/3Bk98Zn6zijWdhBJv2MVRy7vSv9
+  Qubits: 11 | Depth: 1050 | CX: 716 | Shots: 1000
   Recovered d=6, expected d=6 → ✅
 ```
 
@@ -89,17 +84,12 @@ mode of the distribution with no post-processing required.
 
 ```
  x1_r  x2_r  counts  d_candidate
-    5     5      24            6   ← top result
-    1     1      23            6
-    1     1      22            6
-    6     6      20            6
-    1     1      19            6
-    6     6      18            6
-    1     1      17            6
-    6     6      17            6
-    2     2      16            6
-    ...   ...    ...            6   ← all give d=6
+    6     6      28            6   ← top result
+    1     1      25            6
+    6     6      21            6
+    5     5      19            6
+    ...   ...    ...            6   ← all invertible pairs give d=6
 ```
 
-The IBM hardware run shows the same structure with ~3% noise from
-decoherence and readout errors on non-invertible pairs.
+All four hardware runs reproduce this structure with noise proportional to
+their circuit fidelity (~2.8% for superconducting, higher for IonQ trapped-ion).

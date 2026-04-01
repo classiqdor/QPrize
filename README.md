@@ -35,7 +35,7 @@ We provide two implementations at different points on the cost/legitimacy spectr
 
 | Solution | Qubits | CX | Hardware | Result |
 |----------|--------|----|----------|--------|
-| [Scalar oracle](publish/hardware_solution/) | 11 | 716 | IBM ibm_torino ✅ | d=6 recovered |
+| [Scalar oracle](publish/hardware_solution/) | 11 | 716 | IBM ibm_torino, IonQ Forte-1, IBM ibm_pittsburgh, Rigetti Ankaa-3 ✅ | d=6 recovered |
 | [EC arithmetic oracle](publish/scalable_solution/) | 28 | 105,554 | Simulator only | d=6 recovered |
 
 ---

@@ -36,13 +36,16 @@ would make the circuit fully scalable.
 
 ## Hardware Execution & Results
 
-| Metric | Value |
-|--------|-------|
-| Hardware | IBM ibm_torino (Heron r1, 133 qubits) |
-| Circuit | 4-bit, 11 qubits, 716 CX, depth 1050 |
-| Shots | 1,000 | Fidelity estimate | ~2.8% (0.995^716) |
-| Synthesis + execution | 14s + 24s = 38s total |
-| Result | d=6 recovered ✅ (Classiq Job ID: 8f36bc48-6ee8-4a56-968b-4299dc0f316b) |
+Circuit: 4-bit, 11 qubits, 716 CX, depth 1050 | Fidelity ~2.8% (0.995^716)
+
+The same circuit was verified on four devices across three vendors:
+
+| Device | Type | Shots | Result | Job ID |
+|--------|------|-------|--------|--------|
+| IBM ibm_torino (Heron r1) | Superconducting | 1,000 | ✅ d=6 | `8f36bc48` |
+| IonQ Forte-1 | Trapped-ion | 1,024 | ✅ d=6 | `f6da2c51` |
+| IBM ibm_pittsburgh | Superconducting | 1,024 | ✅ d=6 | `56c3b591` |
+| Rigetti Ankaa-3 | Superconducting | 4,096 | ✅ d=6 | `b9c03bef` |
 
 All invertible `(x1_r, x2_r)` pairs consistently recover `d=6` — no engineered post-processing:
 

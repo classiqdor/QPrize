@@ -31,7 +31,7 @@ We provide two implementations:
 
 | Solution | Key size | Qubits | CX | Hardware | Notes |
 |----------|----------|--------|----|----------|-------|
-| [Hardware solution](hardware_solution/) | 4-bit | 11 | 716 | IBM ibm_torino ✅ | Scalar oracle; d=6 recovered on real hardware |
+| [Hardware solution](hardware_solution/) | 4-bit | 11 | 716 | IBM ibm_torino, IonQ Forte-1, IBM ibm_pittsburgh, Rigetti Ankaa-3 ✅ | Scalar oracle; d=6 recovered on 4 devices across 3 vendors |
 | [Scalable solution](scalable_solution/) | 4-bit | 28 | 105,554 | Simulator only | Genuine EC arithmetic; d never used |
 
 ---
