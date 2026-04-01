@@ -260,11 +260,12 @@ def solve(num_bits: int) -> int:
     with timed("Synthesize"):
         qprog = synthesize(qmod)
 
+    show(qprog)
     ops      = qprog.transpiled_circuit.count_ops
     cx_count = ops.get("cx", "N/A")
     n_qubits = qprog.data.width
     depth    = qprog.transpiled_circuit.depth
-    print(f"  Qubits: {n_qubits} | Depth: {depth} | CX: {cx_count}")
+    print(f"  Qubits: {n_qubits} | Depth: {depth} | CX: {cx_count} | Shots: 1000")
 
     results_dir = os.path.join(os.path.dirname(__file__), "results")
     os.makedirs(results_dir, exist_ok=True)
@@ -296,9 +297,12 @@ def solve(num_bits: int) -> int:
         -df_valid["x2_r"] * df_valid["x1_r"].apply(lambda v: pow(int(v), -1, n))
     ) % n
 
+    print(f"\nSamples (invertible, sorted by count):")
+    print(df_valid[["x1_r", "x2_r", "counts", "d_cand"]].sort_values("counts", ascending=False).to_string(index=False))
+
     recovered = int(df_valid["d_cand"].mode()[0])
     ok = recovered == known_d
-    print(f"  Recovered d={recovered}, expected d={known_d} → {'✅' if ok else '❌'}")
+    print(f"\n  Recovered d={recovered}, expected d={known_d} → {'✅' if ok else '❌'}")
 
     import json
     meta = {

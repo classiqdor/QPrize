@@ -110,8 +110,9 @@ def run(use_ibm: bool) -> int:
     with timed("Synthesize"):
         qprog = synthesize(qmod)
 
+    show(qprog)
     ops = qprog.transpiled_circuit.count_ops
-    print(f"  Qubits: {qprog.data.width} | Depth: {qprog.transpiled_circuit.depth} | CX: {ops.get('cx', 'N/A')}")
+    print(f"  Qubits: {qprog.data.width} | Depth: {qprog.transpiled_circuit.depth} | CX: {ops.get('cx', 'N/A')} | Shots: 1000")
 
     with timed("Execute"):
         res = execute(qprog).result_value()
@@ -125,12 +126,15 @@ def run(use_ibm: bool) -> int:
 
     df["x1_r"] = (df["x1"].apply(to_int) / N * n).round().astype(int) % n
     df["x2_r"] = (df["x2"].apply(to_int) / N * n).round().astype(int) % n
-    df = df[df["x1_r"].apply(lambda v: math.gcd(int(v), n) == 1)].copy()
-    df["d_candidate"] = (-df["x2_r"] * df["x1_r"].apply(lambda v: pow(int(v), -1, n))) % n
+    df_valid = df[df["x1_r"].apply(lambda v: math.gcd(int(v), n) == 1)].copy()
+    df_valid["d_candidate"] = (-df_valid["x2_r"] * df_valid["x1_r"].apply(lambda v: pow(int(v), -1, n))) % n
 
-    recovered = int(df["d_candidate"].mode()[0])
+    print(f"\nSamples (invertible, sorted by count):")
+    print(df_valid[["x1_r", "x2_r", "counts", "d_candidate"]].to_string(index=False))
+
+    recovered = int(df_valid["d_candidate"].mode()[0])
     match = recovered == known_d
-    print(f"  Recovered d={recovered}, expected d={known_d} → {'✅' if match else '❌'}")
+    print(f"\n  Recovered d={recovered}, expected d={known_d} → {'✅' if match else '❌'}")
 
     play_ending_sound()
     return recovered
