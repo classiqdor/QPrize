@@ -36,17 +36,18 @@ We provide two implementations:
 
 ---
 
-## Quantum Computer Used
+## Quantum Computers Used
 
-**IBM ibm_torino** — IBM Quantum Network (direct cloud access via Classiq SDK)
+The 4-bit circuit was executed on four devices across three vendors:
 
-| Spec | Value |
-|------|-------|
-| Processor | IBM Heron r1 |
-| Qubits | 133 |
-| 2Q gate fidelity | ~99.5% (CX) |
-| Access method | IBM Cloud direct credentials |
-| SDK | [Classiq](https://classiq.io) |
+| Device | Vendor | Type | Qubits | 2Q fidelity | Access |
+|--------|--------|------|--------|-------------|--------|
+| IBM ibm_torino (Heron r1) | IBM Quantum | Superconducting | 133 | ~99.5% (CX) | IBM Cloud direct |
+| IonQ Forte-1 | IonQ | Trapped-ion | 36 | ~99.5% (native) | Classiq SDK |
+| IBM ibm_pittsburgh | IBM Quantum | Superconducting | 127 | ~99.5% (CX) | IBM Cloud direct |
+| Rigetti Ankaa-3 | Rigetti / AWS Braket | Superconducting | 84 | ~99% (CZ) | AWS Braket |
+
+All runs used the same circuit: **11 qubits, 716 CX, depth 1050**. All recovered d=6 ✅.
 
 ---
 
@@ -91,7 +92,7 @@ python publish/hardware_solution/solution.py --ibm
 
 ```
 publish/
-  hardware_solution/   — 716 CX scalar oracle; runs on IBM ibm_torino
+  hardware_solution/   — 716 CX scalar oracle; verified on IBM, IonQ, Rigetti
   scalable_solution/   — 105k CX genuine EC arithmetic; simulator only
   competitor_reviews/  — comparison with other known submissions
   summary/             — full solution writeup
