@@ -32,7 +32,6 @@ not for cryptographic-scale keys. See the scalable solution for a genuinely scal
 
 1. Install dependencies (from repo root):
    ```bash
-   python -m venv venv && source venv/bin/activate
    pip install classiq
    ```
 

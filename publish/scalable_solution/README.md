@@ -50,7 +50,6 @@ the path to hardware viability.
 
 1. Install dependencies (from repo root):
    ```bash
-   python -m venv venv && source venv/bin/activate
    pip install classiq
    ```
 
@@ -62,7 +61,6 @@ the path to hardware viability.
 ## Running
 
 ```bash
-source venv/bin/activate
 python solution.py 4      # 4-bit (synthesizes in ~9 min, runs on Classiq simulator)
 ```
 

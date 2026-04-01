@@ -2,10 +2,6 @@
 
 *Last updated: 2026-03-31. Deadline: April 5, 2026.*
 
-*Note: The statistical analysis of SteveTipp's submission draws heavily from a prior
-internal review conducted by this team (see `repos/qday-prize/competition/stevetipp/`),
-which includes a full bootstrap analysis of the raw result data.*
-
 ---
 
 ## Known Submissions
@@ -21,13 +17,6 @@ which includes a full bootstrap analysis of the raw result data.*
 | [Davevinci7/ecc-collapse-qday2026](https://github.com/Davevinci7/ecc-collapse-qday2026) | Davevinci7 | — | — | README only, no code |
 | [Davevinci7/qday-breach-override-](https://github.com/Davevinci7/qday-breach-override-) | Davevinci7 | — | — | README only, no code |
 | [skylarthehoster/Qday-Comp](https://github.com/skylarthehoster/Qday-Comp) | skylarthehoster | — | — | Empty repository |
-
----
-
-## Leaderboard
-
-Official leaderboard at [qdayprize.org/leaderboard](https://www.qdayprize.org/leaderboard)
-shows "coming soon" — no live entries published as of 2026-03-31.
 
 ---
 

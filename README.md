@@ -9,10 +9,10 @@
 
 | Name | Email | Organization |
 |------|-------|-------------|
+| Amir Naveh | amir@classiq.io | Classiq Technologies |
+| Ariel Smoler | ariel@classiq.io | Classiq Technologies |
 | Dor Harpaz | dor@classiq.io | Classiq Technologies |
 | Or Samimi Golan | orsa@classiq.io | Classiq Technologies |
-| Amir Naveh | — | Classiq Technologies |
-| Ariel Smoler | — | Classiq Technologies |
 
 **GitHub:** https://github.com/classiqdor/QPrize
 
@@ -58,9 +58,11 @@ We provide two implementations at different points on the cost/legitimacy spectr
 ### Prerequisites
 
 ```bash
+# Clone repo
 git clone https://github.com/classiqdor/QPrize
 cd QPrize
-python -m venv venv && source venv/bin/activate
+
+# Install classiq
 pip install classiq
 python -c "import classiq; classiq.authenticate()"
 ```
@@ -78,7 +80,8 @@ python publish/scalable_solution/solution.py 4
 ### Run on real IBM hardware
 
 ```bash
-cp .env.example .env   # fill in IBM_TOKEN and IBM_INSTANCE
+cp .env.example .env
+# fill in IBM_TOKEN, IBM_INSTANCE
 set -a; source .env; set +a
 python publish/hardware_solution/solution.py --ibm
 ```

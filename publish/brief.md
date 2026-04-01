@@ -1,6 +1,6 @@
 # Technical Brief — QPrize Submission
 
-**Team:** Classiq Technologies (Dor Harpaz, Or Samimi Golan, Amir Naveh, Ariel Smoler)
+**Team:** Classiq Technologies (Amir Naveh, Ariel Smoler, Dor Harpaz, Or Samimi Golan)
 **Date:** March 2026 | **Hardware:** IBM ibm_torino (Heron r1, 133 qubits)
 
 ---
