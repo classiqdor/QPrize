@@ -55,6 +55,28 @@ The same circuit was executed on four devices across three vendors:
    # edit .env with your IBM_TOKEN, IBM_INSTANCE
    ```
 
+## Verifiable jobs
+
+All hardware runs are publicly verifiable:
+
+```
+IBM ibm_torino
+  Classiq Job ID: 8f36bc48-6ee8-4a56-968b-4299dc0f316b
+  Date: 2026-03-30 | Shots: 1,000 | Result: d=6 ✅
+
+IonQ Forte-1
+  Classiq Job ID: f6da2c51-e4e0-4922-9ade-066392a42362
+  Date: 2026-03-14 | Shots: 1,024 | Result: d=6 ✅
+
+IBM ibm_pittsburgh
+  Classiq Job ID: 56c3b591
+  Date: 2026-03-18 | Shots: 1,024 | Result: d=6 ✅
+
+Rigetti Ankaa-3 (via AWS Braket)
+  Classiq Job ID: b9c03bef-24d9-4c84-aabb-a3ddcb80d3ff
+  Date: 2026-03-14 | Shots: 4,096 | Result: d=6 ✅
+```
+
 ## Running
 
 **Simulator (default — safe, free, instant):**
