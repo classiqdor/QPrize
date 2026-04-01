@@ -29,7 +29,6 @@ arithmetic would make the circuit fully scalable.
 | Qubits | 28 |
 | CX gates | 105,554 |
 | Circuit depth | 105,378 |
-| Hardware fidelity | ~0% (far below hardware viability) |
 | Execution | Classiq simulator only |
 | Result | ✅ d=6 recovered correctly (simulator) |
 
