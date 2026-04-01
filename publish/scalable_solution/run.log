@@ -1,7 +1,7 @@
 $ python publish/scalable_solution/solution.py 4
 [attempt_012] 4-bit | p=13 | n=7 | p_bits=4 | var_len=3
 
-Quantum program link: (generated at runtime — open after running to view circuit)
+Quantum program link: https://platform.classiq.io/circuit/3BkDxTKpUnx9ouOr5tA2cwdEemh
   Qubits: 28 | Depth: 105378 | CX: 105554 | Shots: 1000
 
 Samples (invertible, sorted by count):
