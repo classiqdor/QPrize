@@ -24,7 +24,6 @@ not for cryptographic-scale keys. See the scalable solution for a genuinely scal
 | Qubits | 11 |
 | CX gates | 716 |
 | Circuit depth | 1,050 |
-| Hardware fidelity | ~2.8% (0.995^716) |
 
 ## Hardware results
 

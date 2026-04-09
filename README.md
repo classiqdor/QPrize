@@ -44,12 +44,12 @@ We provide two implementations at different points on the cost/legitimacy spectr
 
 The 4-bit circuit was executed on four devices across three vendors:
 
-| Device | Vendor | Type | Qubits | 2Q fidelity | Access |
-|--------|--------|------|--------|-------------|--------|
-| IBM ibm_torino (Heron r1) | IBM Quantum | Superconducting | 133 | ~99.5% (CX) | IBM Cloud direct |
-| IonQ Forte-1 | IonQ | Trapped-ion | 36 | ~99.5% (native) | Classiq SDK |
-| IBM ibm_pittsburgh | IBM Quantum | Superconducting | 127 | ~99.5% (CX) | IBM Cloud direct |
-| Rigetti Ankaa-3 | Rigetti / AWS Braket | Superconducting | 84 | ~99% (CZ) | AWS Braket |
+| Device | Vendor | Type | Qubits | Access |
+|--------|--------|------|--------|--------|
+| IBM ibm_torino (Heron r1) | IBM Quantum | Superconducting | 133 | IBM Cloud direct |
+| IonQ Forte-1 | IonQ | Trapped-ion | 36 | Classiq SDK |
+| IBM ibm_pittsburgh | IBM Quantum | Superconducting | 127 | IBM Cloud direct |
+| Rigetti Ankaa-3 | Rigetti / AWS Braket | Superconducting | 84 | AWS Braket |
 
 All runs used the same circuit: **11 qubits, 716 CX, depth 1050**. All recovered d=6 ✅.
 
